@@ -133,6 +133,28 @@ for controls, summary preferences, and privacy details.
   [the migration notes](docs/installation.md#existing-no-keyboard-code-users)
   before removing old hooks, to preserve settings and avoid duplicate notifications.
 
+## Uninstall
+
+Run the command for the client you want to remove Attention from.
+
+**Codex**
+
+```sh
+codex plugin remove attention@xiaofei-du
+```
+
+**Claude Code**
+
+```sh
+claude plugin uninstall attention@xiaofei-du
+```
+
+Reload or restart the client afterward. This removes that client's plugin;
+it preserves shared settings and imported audio and leaves the other client
+installed. If you want to stop all current and queued speech immediately, turn
+global speech off before uninstalling. Uninstalling alone does not stop a worker
+that is already playing.
+
 ## Build from source
 
 Only source builds need **Apple's Xcode Command Line Tools** (`xcrun` and `clang`).
