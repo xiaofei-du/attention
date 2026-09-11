@@ -1,0 +1,1 @@
+short-tone.mp3 is a generated 0.1-second, 440 Hz test tone (PCM amplitude 500, 22,050 Hz), encoded to 32 kbit/s MP3. It verifies actual MP3 decoding; production and test runs do not require an MP3 encoder.

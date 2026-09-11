@@ -1,0 +1,16 @@
+{
+  "name": "xiaofei-du",
+  "owner": {
+    "name": "Xiaofei Du"
+  },
+  "metadata": {
+    "description": "Local spoken updates for coding agents on macOS 14.2+."
+  },
+  "plugins": [
+    {
+      "name": "attention",
+      "source": "./claude-plugins/attention",
+      "description": "Local spoken task updates for macOS 14.2+."
+    }
+  ]
+}

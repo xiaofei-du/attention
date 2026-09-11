@@ -1,0 +1,46 @@
+{
+  "name": "attention",
+  "version": "0.1.2",
+  "description": "Your agent has something to report. Local spoken updates for macOS 14.2+.",
+  "author": {
+    "name": "Xiaofei Du"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Attention!",
+    "shortDescription": "Your agent has something to report. Local spoken updates for macOS 14.2+.",
+    "longDescription": "Your original agent reports context, progress and next steps with local Mac voices. One shared queue and nine controls work across Codex and Claude Code.",
+    "category": "Productivity",
+    "developerName": "Xiaofei Du",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": "Help me use Attention and explain the starter options."
+  },
+  "mcpServers": {
+    "attention": {
+      "command": "uv",
+      "cwd": ".",
+      "args": [
+        "run",
+        "--no-config",
+        "--no-project",
+        "--isolated",
+        "--python",
+        "3.12",
+        "python",
+        "-I",
+        "launch.py",
+        "mcp",
+        "--provider",
+        "codex"
+      ]
+    }
+  },
+  "keywords": [
+    "voice",
+    "notifications",
+    "macos"
+  ]
+}
