@@ -153,6 +153,18 @@ native uninstall. From a source checkout, the equivalent command is
 `uv run --no-config --no-project --isolated --python 3.12 scripts/uninstall.py --yes`.
 It needs the relevant client CLI while that client still has Attention installed.
 
+The script is also bundled locally, so removal does not depend on GitHub being
+reachable. For a default Codex installation of this release:
+
+```sh
+uv run --no-config --no-project --isolated --python 3.12 "$HOME/.codex/plugins/cache/xiaofei-du/attention/0.1.3/scripts/uninstall.py" --yes
+```
+
+For Claude Code, use `.claude` instead of `.codex` in that path. Adjust the profile
+path if you use a custom home. The running script can remove its own plugin cache.
+If an HTTPS download fails certificate validation, use this local copy or the
+source-checkout command above; do not disable TLS verification.
+
 Active MCP/hook sessions block deletion: quit those clients and retry. Detached
 playback workers receive the global-off signal and must exit before files are
 erased. A failed native removal or a remaining registration returns an error and
