@@ -1,0 +1,49 @@
+name: PR template
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate PR title and body
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check contribution format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+
+          def fail(message):
+              print("::error::" + message)
+              sys.exit(1)
+
+          title = os.environ.get("PR_TITLE", "")
+          conventional = r"(?:feat|fix|docs|refactor|perf|test|build|ci|chore|style|revert)(?:\([a-z0-9][a-z0-9-]*\))?!?: [a-z0-9][^\r\n]*"
+          if not re.fullmatch(conventional, title):
+              fail("Use a semantic PR title, for example: fix(queue): prevent duplicate announcements.")
+
+          # Template instructions are not evidence that a section was filled in.
+          body = re.sub(r"<!--.*?-->", "", os.environ.get("PR_BODY", ""), flags=re.S)
+          body = body.replace("\r\n", "\n").strip()
+          sections = re.fullmatch(
+              r"\*\*Because\*\*[ \t]*\n(?P<why>.*?)^\*\*This commit\*\*[ \t]*\n(?P<what>.*)",
+              body, flags=re.M | re.S,
+          )
+          if not sections:
+              fail("Start the PR body with **Because**, followed by **This commit**; see CONTRIBUTING.md.")
+          for name, content in (("Because", sections["why"]), ("This commit", sections["what"])):
+              if not re.search(r"(?m)^-[ \t]+\S", content):
+                  fail("The **" + name + "** section needs at least one non-empty '- ' bullet.")
+          if re.search(r"(?m)^## (?:Summary|Tests)[ \t]*$", body):
+              fail("Use the Because/This commit template; include verification under This commit.")
+          print("PR title and body follow the contribution format.")
+          PY
