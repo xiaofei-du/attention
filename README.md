@@ -155,6 +155,11 @@ installed. If you want to stop all current and queued speech immediately, turn
 global speech off before uninstalling. Uninstalling alone does not stop a worker
 that is already playing.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for semantic commit messages, the PR
+description format, and verification expectations.
+
 ## Build from source
 
 Only source builds need **Apple's Xcode Command Line Tools** (`xcrun` and `clang`).
