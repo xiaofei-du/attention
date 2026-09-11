@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "attention": {
+      "command": "uv",
+      "cwd": ".",
+      "args": [
+        "run",
+        "--no-config",
+        "--no-project",
+        "--isolated",
+        "--python",
+        "3.12",
+        "python",
+        "-I",
+        "launch.py",
+        "mcp",
+        "--provider",
+        "codex"
+      ]
+    }
+  }
+}
