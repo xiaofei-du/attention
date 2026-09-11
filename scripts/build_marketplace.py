@@ -14,7 +14,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 MARKETPLACE_NAME = 'xiaofei-du'
 
 
@@ -70,7 +70,7 @@ def build_payload(directory):
     shutil.copytree(ROOT / 'nkc', directory / 'nkc', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     shutil.copytree(ROOT / 'skills', directory / 'skills', ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
     (directory / 'scripts').mkdir()
-    for name in ('prepare_isolation.py', 'update_codex_plugin.py'):
+    for name in ('prepare_isolation.py', 'update_codex_plugin.py', 'uninstall.py'):
         shutil.copy2(ROOT / 'scripts' / name, directory / 'scripts' / name)
     (directory / 'docs').mkdir()
     for name in ('isolation-setup.md', 'upgrading.md'):

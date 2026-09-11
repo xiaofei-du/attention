@@ -123,7 +123,7 @@ cannot bind an old call to a newer session turn. Argument values are never store
 
 New installs use exactly `hey sunshine`. Existing text, audio or empty openings persist. Speech and new sessions default on; announcing the session name and lowering other media default off. Ask your agent to change the opening or voices, mute this session, turn all speech off, or clear pending notifications. Nine MCP controls are exposed; summaries remain an original-session hook/CLI workflow. The optional “Session: name” announcement uses the normal voice preferences: auto detection or the user's fixed voice, with no English requirement. It is routed separately from the opening/body; adjacent matching voices are synthesized together. Unavailable optional speech is skipped with a download notice, while speakable body content continues. With no usable voices, speech is skipped and a download notice is shown; coding tasks continue and saved preferences are preserved. Voice inventory is shared across sessions/workers. Prompt hooks refresh it silently in the background when it is more than five minutes old; playback can reuse a validated snapshot while speech-asset fingerprints remain unchanged, without waiting for that refresh. Observed asset changes and explicit voice listing/preferences changes trigger fresh lookup. Undocumented Apple asset layouts may require explicit refresh or the next prompt warmup. First use with no usable cache can still wait for macOS enumeration. There is no fixed queue delay; up to two silent synthesis jobs run concurrently and the assembled notification plays in its original order through one player.
 
-Settings, queue, imported audio and versioned runtimes are under `~/Library/Application Support/Attention/`. Both providers share this location. Plugin updates do not reset settings. Old versioned runtimes are retained. Hooks loaded from version 0.1.1 can use their pinned retained runtime after plugin-cache removal; older loaded hook commands need a client reload as described above. Uninstalling a client plugin does not erase this shared data or disable the other client. Turn global speech off before uninstalling if you want current and queued speech stopped.
+Settings, queue, imported audio and versioned runtimes are under `~/Library/Application Support/Attention/`. Both providers share this location. Plugin updates preserve this data. Native single-client uninstall preserves it too; use the complete-uninstall command below to erase it.
 
 Unsupported platforms/old macOS return a one-time warning and skip notifications before loading Apple audio modules or creating a queue. MCP tools report unsupported-platform status. The launcher still requires uv; an OS check cannot run when its launcher dependency is missing.
 
@@ -179,3 +179,48 @@ Automatic hooks include only a fixed opening type, not the saved opening text, s
 The payload also contains `scripts/prepare_isolation.py` and `docs/isolation-setup.md`. These generate separate, reviewable Codex/Claude host configurations; ordinary marketplace installation does not activate them or change host permissions. Use a protected installed runtime outside the writable project. In isolated mode a bounded local socket accepts only the current turn's summary; the existing six mutating MCP controls require a native human confirmation, while the three read tools and ordinary summary submission do not.
 
 Socket, confirmation and configuration regressions are covered by silent tests. Codex diagnostic sandbox canaries verify selected filesystem/network restrictions, including an exact socket exception; actual new-agent socket delivery remains unverified. Claude host enforcement also remains unverified. Read the setup's acceptance gaps before using these experimental launchers. These files do not establish full-machine or general prompt-injection protection.
+
+## Uninstall
+
+To remove Attention completely from **both Codex and Claude Code**, finish your
+active tasks and quit both clients. Run this in a separate Terminal:
+
+```sh
+uv run --no-config --no-project --isolated --python 3.12 https://raw.githubusercontent.com/xiaofei-du/attention/main/scripts/uninstall.py --yes
+```
+
+This permanently deletes Attention's settings, imported starter audio, summaries,
+queue, logs, dependency environments and retained runtimes. It also removes both
+client registrations, Attention plugin caches and the dedicated marketplace cache.
+Your original audio files outside Attention, other plugins, project source files,
+macOS voices and shared uv/Python installations are preserved. A marketplace used
+by other plugins is retained and reported.
+
+Replace `--yes` with `--dry-run` to preview the exact paths and native commands
+without changing anything. The standalone script works even if you already ran a
+native uninstall. From a source checkout, the equivalent command is
+`uv run --no-config --no-project --isolated --python 3.12 scripts/uninstall.py --yes`.
+It needs the relevant client CLI while that client still has Attention installed.
+
+Active MCP/hook sessions block deletion: quit those clients and retry. Detached
+playback workers receive the global-off signal and must exit before files are
+erased. A failed native removal or a remaining registration returns an error and
+preserves shared data; retrying the command is safe. Use the same `CODEX_HOME`,
+`CLAUDE_CONFIG_DIR` and `ATTENTION_DATA_DIR` overrides as your installation, if any.
+Other custom profiles must be uninstalled separately before erasing shared data.
+Legacy no-keyboard-code hooks require migration/removal first.
+
+To remove Attention from **only one client** and keep the other client, settings
+and imported audio, use that client's native command instead:
+
+```sh
+codex plugin remove attention@xiaofei-du
+# or
+claude plugin uninstall attention@xiaofei-du
+```
+
+Restart that client afterward. These single-client commands preserve shared data
+and do not stop a worker already playing. The complete-uninstall command above is
+the option that stops playback and erases Attention's data. Client conversation
+history, operating-system permission records and backups are owned by their hosts
+and are outside this cleanup command.
