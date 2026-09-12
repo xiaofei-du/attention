@@ -5,11 +5,16 @@ Standalone, Python 3.11+ standard library only; it also works after native plugi
 removal. Finish active tasks and quit both clients before running from Terminal.
 """
 import argparse
+import base64
+import contextlib
+import csv
 import ctypes
 import errno
 import hashlib
 import json
 import os
+import re
+import stat
 import shutil
 import sqlite3
 import struct
@@ -121,7 +126,269 @@ def validate_data(root):
         raise ValueError('Cannot identify Attention data in ' + str(root))
 
 
+# This inventory is an ownership boundary, not authentication of publisher code.
+# Unknown files cause refusal before native clients can remove their caches.
+STATE_FILES = {'queue.sqlite3', 'queue.sqlite3-wal', 'queue.sqlite3-shm',
+               'queue.sqlite3-journal', 'worker.log', 'speaker.lock',
+               'voice-inventory.json', 'voice-inventory.lock'}
+
+
+def identity(info):
+    return (info.st_dev, info.st_ino, info.st_uid, stat.S_IFMT(info.st_mode))
+
+
+def inventory(root):
+    """Never follow directory links or cross filesystems while enumerating."""
+    if not root.exists():
+        return {}
+    device = root.lstat().st_dev
+    result = {}
+    def visit(path):
+        info = path.lstat()
+        if info.st_uid != os.geteuid():
+            raise ValueError('Cleanup path has a different owner: ' + str(path))
+        if info.st_dev != device:
+            raise ValueError('Refusing to cross a filesystem boundary: ' + str(path))
+        if not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)):
+            raise ValueError('Unexpected file type: ' + str(path))
+        if stat.S_ISDIR(info.st_mode) and info.st_mode & 0o022:
+            raise ValueError('Cleanup path is writable by other users: ' + str(path))
+        result[path.relative_to(root).as_posix()] = identity(info)
+        if stat.S_ISDIR(info.st_mode):
+            for child in path.iterdir():
+                visit(child)
+    visit(root)
+    return result
+
+
+def file_digest(path, algorithm='sha256'):
+    checked_path(path)
+    with path.open('rb') as file:
+        return hashlib.file_digest(file, algorithm).digest()
+
+
+def payload_files(bundle, installed=False):
+    files = read_object(bundle / 'payload.json').get('files', {})
+    if not isinstance(files, dict) or not {'attention.py', 'nkc/store.py', 'nkc/runtime.py'} <= files.keys():
+        raise ValueError('Cannot identify Attention payload: ' + str(bundle))
+    allowed = {'payload.json'}
+    for name, digest in files.items():
+        relative = Path(name)
+        if (not name or relative.is_absolute() or '..' in relative.parts or
+                not isinstance(digest, str) or not re.fullmatch('[0-9a-f]{64}', digest)):
+            raise ValueError('Invalid Attention payload entry')
+        if file_digest(bundle / relative).hex() != digest:
+            raise ValueError('Modified Attention payload file; preserved: ' + str(bundle / relative))
+        allowed.add(name)
+    if installed:
+        allowed.add('attention')  # Generated local command wrapper, never executed here.
+    else:
+        allowed.update({'README.md', '.mcp.json', '.codex-plugin/plugin.json',
+                        '.claude-plugin/plugin.json', 'hooks/hooks.json'})
+    return allowed
+
+
+def environment_files(environment):
+    saved = read_object(environment / '.verified')
+    if not {'requirements', 'python', 'platform', 'architecture'} <= saved.keys():
+        raise ValueError('Cannot identify Attention Python environment: ' + str(environment))
+    cfg = checked_path(environment / 'pyvenv.cfg').read_text()
+    if 'include-system-site-packages = false' not in cfg:
+        raise ValueError('Unexpected Python environment configuration')
+    allowed = {'.verified', 'pyvenv.cfg', '.lock', '.gitignore', 'CACHEDIR.TAG'}
+    allowed.update('bin/' + name for name in ('python', 'python3', 'python3.11', 'python3.12', 'python3.13',
+        'activate', 'activate.csh', 'activate.fish', 'activate.nu', 'activate.ps1',
+        'activate.bat', 'activate.xsh', 'activate_this.py', 'deactivate.bat', 'pydoc.bat'))
+    packages = list(environment.glob('lib/python*/site-packages'))
+    if len(packages) != 1:
+        raise ValueError('Cannot identify Python site-packages')
+    package_root = checked_path(packages[0])
+    for name in ('_virtualenv.pth', '_virtualenv.py'):
+        allowed.add((package_root / name).relative_to(environment).as_posix())
+    records = list(package_root.glob('*.dist-info/RECORD'))
+    if not records:
+        raise ValueError('Python environment has no installed-file records')
+    for record in records:
+        checked_path(record)
+        with record.open(newline='') as file:
+            for name, digest, size in csv.reader(file):
+                target = Path(os.path.abspath(package_root / name))
+                if environment not in target.parents:
+                    raise ValueError('Python file record escapes its environment')
+                relative = target.relative_to(environment).as_posix()
+                if digest:
+                    algorithm, encoded = digest.split('=', 1)
+                    if algorithm not in ('sha256', 'sha384', 'sha512'):
+                        raise ValueError('Unsupported Python file digest')
+                    actual = base64.urlsafe_b64encode(file_digest(target, algorithm)).rstrip(b'=').decode()
+                    if actual != encoded:
+                        raise ValueError('Modified Python environment file; preserved: ' + str(target))
+                elif target != record:
+                    # Bytecode is admitted below only when its source is owned.
+                    if target.suffix == '.pyc':
+                        continue
+                    raise ValueError('Unverifiable Python file record: ' + str(target))
+                allowed.add(relative)
+    return allowed
+
+
+def allow_bytecode(names, allowed):
+    for name in names:
+        relative = Path(name)
+        match = re.fullmatch(r'(.+)\.cpython-\d+(?:\.opt-[12])?\.pyc', relative.name)
+        if relative.parent.name == '__pycache__' and match:
+            source = relative.parent.parent / (match[1] + '.py')
+            if source.as_posix() in allowed:
+                allowed.add(name)
+
+
+def owned_inventory(root, kind):
+    names = inventory(root)
+    if not names:
+        return names
+    allowed = set()
+    empty_dirs = {'.'}
+    if kind == 'data':
+        allowed.update({'setup.lock', 'dependencies.lock', '.uninstall.json', '.uninstall.tmp'})
+        allowed.update('state/' + name for name in STATE_FILES)
+        empty_dirs.update({'state', 'state/opening-audio', 'r', 'e', 'notices'})
+        database = root / 'state/queue.sqlite3'
+        if database.exists() and database.lstat().st_nlink != 1:
+            raise ValueError('Refusing a hard-linked Attention database')
+        for name in names:
+            relative = Path(name)
+            if relative.parent.as_posix() == 'state/opening-audio' and re.fullmatch(r'[0-9a-f]{64}\.aiff', relative.name):
+                if file_digest(root / name).hex() == relative.stem:
+                    allowed.add(name)
+            elif relative.parent.as_posix() == 'notices' and (root / name).is_file():
+                checked_path(root / name)
+                if (re.fullmatch('[0-9a-f]{16}', relative.name) and (root / name).read_text().startswith('Attention!')):
+                    allowed.add(name)
+        for folder, loader in [('r', lambda p: payload_files(p, installed=True)), ('e', environment_files)]:
+            directory = root / folder
+            if directory.exists():
+                checked_path(directory)
+                for version in directory.iterdir():
+                    checked_path(version)
+                    if not version.is_dir():
+                        raise ValueError('Unknown Attention version entry: ' + str(version))
+                    prefix = version.relative_to(root).as_posix()
+                    empty_dirs.add(prefix)
+                    if any(version.iterdir()):
+                        allowed.update(prefix + '/' + name for name in loader(version))
+    elif kind == 'cache':
+        for version in root.iterdir():
+            checked_path(version)
+            if not version.is_dir():
+                raise ValueError('Unknown plugin cache entry: ' + str(version))
+            empty_dirs.add(version.name)
+            if any(version.iterdir()):
+                allowed.update(version.name + '/' + name for name in payload_files(version))
+    elif kind == 'marketplace':
+        # Git only reads its index. Disable filesystem-monitor commands and ignore
+        # inherited Git overrides; no checkout, filters, hooks or project code.
+        env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
+        result = subprocess.run(['/usr/bin/git', '--no-optional-locks', '-c', 'core.fsmonitor=false',
+                                 '--git-dir', str(root / '.git'), 'ls-files', '--stage', '-z'],
+                                env=env, capture_output=True, timeout=10)
+        if result.returncode:
+            raise ValueError('Cannot inventory marketplace clone; preserved: ' + str(root))
+        for entry in result.stdout.decode().rstrip('\0').split('\0'):
+            metadata, name = entry.split('\t', 1)
+            mode, digest, stage = metadata.split()
+            relative = Path(name)
+            if relative.is_absolute() or '..' in relative.parts or mode not in ('100644', '100755') or stage != '0':
+                raise ValueError('Unsupported marketplace index entry; preserved')
+            source = checked_path(root / name)
+            if source.exists():
+                content = source.read_bytes()
+                actual = hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest()
+                if actual != digest:
+                    raise ValueError('Modified marketplace file; preserved: ' + str(source))
+            allowed.add(name)
+        for name in names:
+            if re.fullmatch(r'\.git/(?:HEAD|config|description|index|packed-refs|shallow|FETCH_HEAD|ORIG_HEAD|'
+                            r'info/exclude|hooks/[\w.-]+\.sample|objects/[0-9a-f]{2}/[0-9a-f]{38}|'
+                            r'objects/pack/pack-[0-9a-f]{40}\.(?:pack|idx|rev)|'
+                            r'(?:refs|logs/refs)/(?:heads|remotes|tags)/[\w./-]+|logs/HEAD)', name):
+                allowed.add(name)
+        empty_dirs.update({'.git/hooks', '.git/info', '.git/branches', '.git/objects/info',
+                           '.git/objects/pack', '.git/refs', '.git/refs/heads', '.git/refs/remotes',
+                           '.git/refs/tags', '.git/logs', '.git/logs/refs',
+                           '.git/logs/refs/heads', '.git/logs/refs/remotes'})
+    # Native Claude data is not used by Attention; only an empty directory is owned.
+    allow_bytecode(names, allowed)
+    directories = set(empty_dirs)
+    for name in allowed:
+        directories.update(p.as_posix() for p in Path(name).parents)
+    for name, info in names.items():
+        if info[3] == stat.S_IFDIR:
+            known = name in directories
+        else:
+            known = name in allowed
+            if info[3] == stat.S_IFLNK:
+                known = known and bool(re.fullmatch(r'e/[^/]+/bin/python(?:3(?:\.\d+)?)?', name))
+        if not known:
+            raise ValueError('Unknown file or directory; nothing will be erased: ' + str(root / name))
+    return names
+
+
+@contextlib.contextmanager
+def directory_fd(path):
+    """Anchor every component from / without following a replacement symlink."""
+    descriptor = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for part in path.parts[1:]:
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        yield descriptor
+    finally:
+        os.close(descriptor)
+
+
+def remove_inventory(root, expected):
+    """Delete only preflighted names; rmdir preserves anything added afterwards."""
+    if not expected:
+        return
+    children = {}
+    for relative in expected:
+        if relative != '.':
+            children.setdefault(Path(relative).parent.as_posix(), []).append(relative)
+    with directory_fd(root.parent) as parent:
+        if identity(os.stat(root.name, dir_fd=parent, follow_symlinks=False)) != expected['.']:
+            raise RuntimeError('Cleanup directory was replaced: ' + str(root))
+        def remove(name, parent_fd, relative):
+            info = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
+            if identity(info) != expected[relative]:
+                raise RuntimeError('Cleanup entry changed: ' + str(root / relative))
+            if stat.S_ISDIR(info.st_mode):
+                descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent_fd)
+                try:
+                    if identity(os.fstat(descriptor)) != expected[relative]:
+                        raise RuntimeError('Cleanup directory changed')
+                    for child in children.get(relative, []):
+                        remove(Path(child).name, descriptor, child)
+                    if identity(os.stat(name, dir_fd=parent_fd, follow_symlinks=False)) != expected[relative]:
+                        raise RuntimeError('Cleanup directory changed')
+                    os.rmdir(name, dir_fd=parent_fd)
+                finally:
+                    os.close(descriptor)
+            else:
+                os.unlink(name, dir_fd=parent_fd)
+        remove(root.name, parent, '.')
+
+
+def verify_identities(removal):
+    for path, expected in removal['identities'].items():
+        actual = identity(Path(path).lstat()) if Path(path).exists() else None
+        if actual != expected:
+            raise RuntimeError('Installation directory changed after preview: ' + path)
+
+
 def plan(root, codex, claude):
+    if os.geteuid() == 0 or os.getuid() != os.geteuid():
+        raise ValueError('Do not run Attention uninstall with sudo/root or elevated privileges')
     root, codex, claude = (checked_path(p) for p in (root, codex, claude))
     validate_data(root)
     for left, right in ((root, codex), (root, claude), (codex, claude)):
@@ -209,7 +476,16 @@ def plan(root, codex, claude):
         hooks = read_object(home / name).get('hooks', {})
         if 'no-keyboard-code:' in json.dumps(hooks):
             raise ValueError('Legacy no-keyboard-code hooks remain; migrate/remove those hooks first')
+    kinds = {root: 'data', targets[0]: 'cache', targets[1]: 'cache', targets[2]: 'native-data'}
+    kinds.update({path: 'marketplace' for path in targets[3:]})
+    snapshots = {path: owned_inventory(path, kind) for path, kind in kinds.items()}
+    identities = {str(path / name): info for path, entries in snapshots.items()
+                  for name, info in entries.items() if info[3] == stat.S_IFDIR}
+    for path in kinds:
+        if not path.exists():
+            identities[str(path)] = None
     return {'data': root, 'codex': codex, 'claude': claude, 'commands': commands,
+            'identities': identities, 'kinds': kinds,
             'targets': targets, 'retained': retained, 'scope_settings': scope_settings}
 
 
@@ -310,6 +586,11 @@ def stop_workers(found, root):
 
 
 def execute(removal):
+    if os.geteuid() == 0 or os.getuid() != os.geteuid():
+        raise ValueError('Do not run Attention uninstall with sudo/root or elevated privileges')
+    verify_identities(removal)
+    for path, kind in removal['kinds'].items():
+        owned_inventory(path, kind)
     root = removal['data']
     roots = [root, *removal['targets']]
     # Preflight every dependency before the first native mutation.
@@ -319,17 +600,45 @@ def execute(removal):
     stop_workers(processes(roots), root)
     # Keep verification paths through a partially successful native uninstall.
     # Otherwise a retry could forget a project once its registry row disappears.
-    root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    progress = checked_path(root / '.uninstall.tmp')
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW
-    with os.fdopen(os.open(progress, flags, 0o600), 'w') as file:
-        json.dump({'application': 'attention-uninstall-v1',
-                   'scope_settings': [str(p) for p in removal['scope_settings']]}, file)
-        file.flush()
-        os.fsync(file.fileno())
-    os.replace(progress, checked_path(root / '.uninstall.json'))
+    expected_root = removal['identities'][str(root)]
+    if expected_root is None:
+        # Refuse an unexpected directory created while workers were stopping.
+        root.parent.mkdir(parents=True, exist_ok=True)
+        root.mkdir(mode=0o700)
+        expected_root = identity(root.lstat())
+        removal['identities'][str(root)] = expected_root
+    # A fresh, exclusive name cannot truncate a pre-existing hard link.
+    with directory_fd(root) as descriptor:
+        if identity(os.fstat(descriptor)) != expected_root:
+            raise RuntimeError('Installation directory replaced before writing uninstall progress')
+        name = '.uninstall-' + os.urandom(12).hex()
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+        created = False
+        try:
+            pending = os.open(name, flags, 0o600, dir_fd=descriptor)
+            created = True
+            with os.fdopen(pending, 'w') as file:
+                json.dump({'application': 'attention-uninstall-v1',
+                           'scope_settings': [str(p) for p in removal['scope_settings']]}, file)
+                file.flush()
+                os.fsync(file.fileno())
+            os.replace(name, '.uninstall.json', src_dir_fd=descriptor, dst_dir_fd=descriptor)
+        finally:
+            if created:
+                try:
+                    os.unlink(name, dir_fd=descriptor)
+                except FileNotFoundError:
+                    pass
     env = dict(os.environ, CODEX_HOME=str(removal['codex']), CLAUDE_CONFIG_DIR=str(removal['claude']))
     for command, cwd in removal['commands']:
+        # Native clients own their internal removal operation. Recheck immediately
+        # before handing over; never claim to sandbox a concurrently hostile client.
+        for path, kind in removal['kinds'].items():
+            if path.exists():
+                expected = removal['identities'].get(str(path))
+                if expected is not None and identity(path.lstat()) != expected:
+                    raise RuntimeError('Installation directory replaced before native cleanup')
+                owned_inventory(path, kind)
         result = subprocess.run(command, cwd=cwd, env=env, capture_output=True, text=True, timeout=60)
         if result.returncode:
             raise RuntimeError('Native uninstall failed: ' + ' '.join(command) +
@@ -342,14 +651,14 @@ def execute(removal):
         raise RuntimeError('Attention is still registered in a client; shared data was preserved')
     if processes(roots):
         raise RuntimeError('Attention restarted during uninstall. Close both clients and retry.')
+    # Native removal may remove cache roots, but must never replace a surviving one.
+    for path, info in removal['identities'].items():
+        target = Path(path)
+        if info is not None and target.exists() and identity(target.lstat()) != info:
+            raise RuntimeError('Installation directory replaced during uninstall: ' + path)
+    snapshots = {path: owned_inventory(path, kind) for path, kind in removal['kinds'].items()}
     for target in [*removal['targets'], root]:
-        checked_path(target)
-        if target == root:
-            validate_data(root)
-        if target.exists():
-            if not shutil.rmtree.avoids_symlink_attacks:
-                raise RuntimeError('This Python cannot safely remove directory trees')
-            shutil.rmtree(target)
+        remove_inventory(target, snapshots[target])
     leftovers = [str(p) for p in roots if p.exists() or p.is_symlink()]
     if leftovers or processes(roots):
         raise RuntimeError('Uninstall incomplete; a client recreated Attention files/processes. Close it and retry.')
@@ -412,7 +721,7 @@ def main():
                 return 2
         print(json.dumps(execute(removal), indent=2))
         return 0
-    except (OSError, ValueError, RuntimeError, sqlite3.Error, subprocess.SubprocessError) as error:
+    except (OSError, ValueError, RuntimeError, sqlite3.Error, csv.Error, subprocess.SubprocessError) as error:
         print('Attention uninstall incomplete: ' + str(error), file=sys.stderr)
         return 1
 

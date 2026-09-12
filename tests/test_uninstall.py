@@ -1,4 +1,5 @@
 """Full removal must erase owned data without touching unrelated profiles/files."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -12,6 +13,18 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / 'scripts/uninstall.py'
+ASSET = 'state/opening-audio/' + hashlib.sha256(b'personal audio').hexdigest() + '.aiff'
+
+def write_payload(directory, extra=None):
+    directory.mkdir(parents=True, exist_ok=True)
+    files = {'attention.py': b'# fixture', 'nkc/store.py': b'# fixture', 'nkc/runtime.py': b'# fixture'}
+    files.update(extra or {})
+    for name, content in files.items():
+        target = directory / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    (directory / 'payload.json').write_text(json.dumps({'version': '0.1.5', 'files': {
+        name: hashlib.sha256(content).hexdigest() for name, content in files.items()}}))
 
 
 class UninstallTests(unittest.TestCase):
@@ -24,12 +37,11 @@ class UninstallTests(unittest.TestCase):
         self.claude = self.base / 'claude'
         self.codex.mkdir()
         self.claude.mkdir()
-        (self.data / 'state/assets').mkdir(parents=True)
+        (self.data / 'state/opening-audio').mkdir(parents=True)
         from nkc.store import Store
         Store(self.data / 'state')
-        (self.data / 'state/assets/intro.mp3').write_bytes(b'personal audio')
-        (self.data / 'r/old').mkdir(parents=True)
-        (self.data / 'r/old/payload.json').write_text('{}')
+        (self.data / ASSET).write_bytes(b'personal audio')
+        write_payload(self.data / 'r/old')
         (self.data / 'e/old').mkdir(parents=True)
         (self.base / 'unrelated').write_text('keep me')
         for home in (self.codex, self.claude):
@@ -60,7 +72,7 @@ class UninstallTests(unittest.TestCase):
     def test_requires_explicit_yes_before_erasing_data(self):
         result = self.run_cli()
         self.assertNotEqual(result.returncode, 0)
-        self.assertTrue((self.data / 'state/assets/intro.mp3').exists())
+        self.assertTrue((self.data / ASSET).exists())
 
     def test_removes_both_caches_all_personal_data_and_is_idempotent(self):
         for _ in range(2):
@@ -76,11 +88,153 @@ class UninstallTests(unittest.TestCase):
         (self.data / 'family-photos').mkdir()
         result = self.run_cli('--yes')
         self.assertNotEqual(result.returncode, 0)
-        self.assertTrue((self.data / 'state/assets/intro.mp3').exists())
+        self.assertTrue((self.data / ASSET).exists())
         self.env['ATTENTION_DATA_DIR'] = str(self.base)
         result = self.run_cli('--yes')
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue((self.base / 'unrelated').exists())
+
+    def test_unknown_nested_files_block_all_removal(self):
+        for relative in ('state/personal-note.txt', 'state/opening-audio/family-photo.jpg',
+                         'r/old/private.txt', 'e/old/private.txt'):
+            with self.subTest(relative=relative):
+                self.setUp()
+                canary = self.data / relative
+                canary.write_text('unrelated personal file')
+                result = self.run_cli('--yes')
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(canary.read_text(), 'unrelated personal file')
+                self.assertTrue((self.codex / 'plugins/cache/xiaofei-du/attention').exists())
+                canary.unlink()
+
+    def test_unknown_cache_file_blocks_native_client_before_removal(self):
+        canary = self.codex / 'plugins/cache/xiaofei-du/attention/0.1.2/private.txt'
+        canary.write_text('keep me')
+        (self.codex / 'config.toml').write_text('[plugins."attention@xiaofei-du"]\nenabled = true\n')
+        binary = self.base / 'bin'
+        binary.mkdir()
+        marker = self.base / 'client-was-executed'
+        (binary / 'codex').write_text('#!/bin/sh\ntouch "' + str(marker) + '"\n')
+        (binary / 'codex').chmod(0o700)
+        self.env['PATH'] = str(binary) + ':/usr/bin:/bin'
+        result = self.run_cli('--yes')
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(canary.read_text(), 'keep me')
+        self.assertTrue(self.data.exists())
+        self.assertFalse(marker.exists())
+
+    def test_foreign_owned_directory_is_preserved(self):
+        mod = self.module()
+        real_stat = Path.lstat
+        def foreign(path):
+            result = real_stat(path)
+            if path == self.data / 'state':
+                fields = list(result)
+                fields[4] = os.geteuid() + 1
+                return os.stat_result(fields)
+            return result
+        with patch.object(Path, 'lstat', foreign):
+            with self.assertRaisesRegex(ValueError, 'owner'):
+                mod.plan(self.data, self.codex, self.claude)
+        self.assertTrue(self.data.exists())
+
+    def test_other_user_writable_directory_is_preserved(self):
+        (self.data / 'state').chmod(0o777)
+        result = self.run_cli('--yes')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue((self.data / ASSET).exists())
+
+    def test_file_added_during_cleanup_survives(self):
+        mod = self.module()
+        removal = mod.plan(self.data, self.codex, self.claude)
+        real_remove = mod.remove_inventory
+        canary = self.data / 'state/private.txt'
+        def add_file(path, expected):
+            if path == self.data:
+                canary.write_text('keep this new file')
+            real_remove(path, expected)
+        with patch.object(mod, 'remove_inventory', side_effect=add_file):
+            with self.assertRaises(OSError):
+                mod.execute(removal)
+        self.assertEqual(canary.read_text(), 'keep this new file')
+
+    def test_hard_linked_database_is_never_modified_or_deleted(self):
+        original = self.base / 'private.sqlite3'
+        os.link(self.data / 'state/queue.sqlite3', original)
+        before = original.read_bytes()
+        result = self.run_cli('--yes')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(original.read_bytes(), before)
+        self.assertTrue(self.data.exists())
+
+    def test_hard_linked_progress_file_does_not_overwrite_private_file(self):
+        original = self.base / 'private.txt'
+        original.write_text('my original private content')
+        os.link(original, self.data / '.uninstall.tmp')
+        result = self.run_cli('--yes')
+        self.assertEqual(original.read_text(), 'my original private content')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_real_dependency_environment_is_removed_without_touching_shared_python(self):
+        import shutil
+        environment = self.data / 'e/installed'
+        shutil.copytree(ROOT / '.venv', environment, symlinks=True)
+        (environment / '.verified').write_text(json.dumps({
+            'requirements': 'fixture', 'python': sys.version,
+            'platform': sys.platform, 'architecture': 'fixture'}))
+        original = Path(sys.executable).resolve()
+        before = original.stat()
+        result = self.run_cli('--yes')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(environment.exists())
+        self.assertEqual(original.stat().st_ino, before.st_ino)
+        self.assertEqual(original.stat().st_size, before.st_size)
+
+    def test_clean_marketplace_clone_is_removed_but_untracked_file_blocks_removal(self):
+        clone = self.codex / '.tmp/marketplaces/xiaofei-du'
+        clone.parent.mkdir(parents=True)
+        subprocess.run(['/usr/bin/git', 'clone', '--quiet', '--template=', '--no-hardlinks', str(ROOT), str(clone)],
+                       check=True, capture_output=True)
+        canary = clone / 'private.txt'
+        canary.write_text('keep my note')
+        result = self.run_cli('--yes')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(canary.read_text(), 'keep my note')
+        canary.unlink()
+        result = self.run_cli('--yes')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(clone.exists())
+
+    def test_root_execution_is_refused_even_with_yes(self):
+        mod = self.module()
+        with patch.object(mod.os, 'geteuid', return_value=0):
+            with self.assertRaisesRegex(ValueError, 'root|sudo'):
+                mod.plan(self.data, self.codex, self.claude)
+        self.assertTrue(self.data.exists())
+
+    def test_replaced_directory_after_preview_is_preserved(self):
+        mod = self.module()
+        removal = mod.plan(self.data, self.codex, self.claude)
+        original = self.base / 'original'
+        self.data.rename(original)
+        import shutil
+        shutil.copytree(original, self.data)
+        with self.assertRaisesRegex((ValueError, RuntimeError), 'changed|replaced'):
+            mod.execute(removal)
+        self.assertTrue((self.data / 'state/queue.sqlite3').exists())
+        self.assertTrue((original / 'state/queue.sqlite3').exists())
+
+    def test_directory_replaced_while_stopping_worker_is_not_written(self):
+        mod = self.module()
+        removal = mod.plan(self.data, self.codex, self.claude)
+        def replace(found, root):
+            root.rename(self.base / 'original-data')
+            root.mkdir()
+            (root / '.uninstall.json').write_text('unrelated replacement file')
+        with patch.object(mod, 'stop_workers', side_effect=replace):
+            with self.assertRaisesRegex(RuntimeError, 'replaced|changed'):
+                mod.execute(removal)
+        self.assertEqual((self.data / '.uninstall.json').read_text(), 'unrelated replacement file')
 
     def test_symlinked_root_and_cache_are_never_followed(self):
         alias = self.base / 'alias'
@@ -93,12 +247,12 @@ class UninstallTests(unittest.TestCase):
         shutil.rmtree(cache)
         cache.symlink_to(self.data, target_is_directory=True)
         self.assertNotEqual(self.run_cli('--yes').returncode, 0)
-        self.assertTrue((self.data / 'state/assets/intro.mp3').exists())
+        self.assertTrue((self.data / ASSET).exists())
 
-    def test_symlink_inside_owned_data_unlinks_without_erasing_target(self):
-        (self.data / 'state/assets/link').symlink_to(self.base / 'unrelated')
+    def test_unknown_symlink_inside_data_preserves_everything(self):
+        (self.data / 'state/opening-audio/link').symlink_to(self.base / 'unrelated')
         result = self.run_cli('--yes')
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotEqual(result.returncode, 0, result.stderr)
         self.assertEqual((self.base / 'unrelated').read_text(), 'keep me')
 
     def test_malformed_client_metadata_preserves_everything(self):
@@ -146,6 +300,7 @@ def silent(text, settings, cancelled):
     return False
 run_worker(Store(root), play=silent)
 """)
+        write_payload(runtime.parent, {'run.py': runtime.read_bytes()})
         proc = subprocess.Popen([sys.executable, str(runtime), str(ROOT), str(ready),
                                  '--state-dir', str(self.data / 'state'), 'worker'],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -201,13 +356,12 @@ run_worker(Store(root), play=silent)
     def test_recreated_files_after_delete_are_reported_as_incomplete(self):
         mod = self.module()
         removal = mod.plan(self.data, self.codex, self.claude)
-        real_remove = mod.shutil.rmtree
-        def recreate(path):
-            real_remove(path)
+        real_remove = mod.remove_inventory
+        def recreate(path, expected):
+            real_remove(path, expected)
             if path == self.data:
                 (path / 'notices').mkdir(parents=True)
-        with patch.object(mod.shutil, 'rmtree', side_effect=recreate) as replacement:
-            replacement.avoids_symlink_attacks = True
+        with patch.object(mod, 'remove_inventory', side_effect=recreate):
             with self.assertRaisesRegex(RuntimeError, 'incomplete'):
                 mod.execute(removal)
 
@@ -290,7 +444,7 @@ run_worker(Store(root), play=silent)
         import shutil
         shutil.rmtree(self.data)
         (self.data / 'notices').mkdir(parents=True)
-        (self.data / 'notices/platform-warning').write_text('Attention! requires macOS 14.2+')
+        (self.data / 'notices/0123456789abcdef').write_text('Attention! requires macOS 14.2+')
         result = self.run_cli('--yes')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(self.data.exists())

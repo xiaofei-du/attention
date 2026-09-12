@@ -4,8 +4,11 @@
 
 main() (
     set -euo pipefail
-    readonly expected_sha256='56423813f1e29c072bf14be71f49a1f5044fcb6bd930570bc33718309002e38e'
-    readonly helper_url='https://raw.githubusercontent.com/xiaofei-du/attention/main/scripts/uninstall.py'
+    if [[ $EUID -eq 0 || $EUID -ne $UID ]]; then
+        printf '%s\n' 'Do not run Attention uninstall with sudo/root or elevated privileges.' >&2; exit 1
+    fi
+    readonly expected_sha256='afed805ffa17bdcdadc4bfe3c439d0a30e7d024763a5b331db76aaae14c36430'
+    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/2ad7cfecb57839f1e15516e9308a4255049a3d32'
     local offline=false scratch='' candidate source_dir='' helper='' interpreter='' executable digest
     local data_root="${ATTENTION_DATA_DIR:-$HOME/Library/Application Support/Attention}"
     local -a arguments=() candidates=()
@@ -101,8 +104,8 @@ main() (
         fi
         printf '%s\n' 'Fetching the Attention uninstall helper from GitHub and checking its SHA-256.' >&2
         executable="$(command -v curl || true)"
-        if [[ "$executable" != /* || ! -f "$executable" || ! -x "$executable" ]] || ! "$executable" -fsSL --proto '=https' --proto-redir '=https' \
-                --max-time 30 "$helper_url" -o "$scratch/uninstall.py"; then
+        if [[ "$executable" != /* || ! -f "$executable" || ! -x "$executable" ]] || ! "$executable" -qfsSL --proto '=https' --proto-redir '=https' \
+                --max-time 30 --max-filesize 1048576 -H 'Accept: application/vnd.github.raw+json' "$helper_url" -o "$scratch/uninstall.py"; then
             printf '%s\n' 'Download failed. Nothing was removed. Use the uninstall.sh bundled with Attention for offline removal.' >&2
             exit 1
         fi

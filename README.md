@@ -188,20 +188,38 @@ for controls, summary preferences, and privacy details.
 ## Uninstall
 
 Finish your active tasks, quit Codex and Claude Code, then run this in a separate
-Terminal:
+Terminal. Paste this block once; it downloads a fixed version and checks its
+SHA-256 **before running it**:
 
+<!-- attention-uninstall:start -->
 ```sh
-curl -fsSL https://raw.githubusercontent.com/xiaofei-du/attention/main/uninstall.sh | bash
+(
+  set -eu
+  entry="$(/usr/bin/mktemp "${TMPDIR:-/tmp}/attention-uninstall.XXXXXXXX")"
+  trap '/bin/rm -f -- "$entry"' EXIT
+  /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
+    -H 'Accept: application/vnd.github.raw+json' \
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/b4963b0b4389aeeb145327799bf9b89774cd0ade -o "$entry"
+  digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
+  [ "${digest%% *}" = 'a551ea2f3bb6f48cd2e15aa0320577e021c41ead9fef9d7d08bb96c21fcaaaab' ] || {
+    printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
+  }
+  /bin/bash -p "$entry"
+)
 ```
+<!-- attention-uninstall:end -->
 
 The launcher finds an existing Python and a verified local uninstall helper, or
-fetches the matching helper from GitHub. It shows the cleanup paths and asks you
+fetches the matching helper by its immutable Git object ID from GitHub. It shows the cleanup paths and asks you
 to type **yes** before removing Attention from **both clients**.
 
 This permanently deletes Attention's settings, imported audio copies, summaries,
 queue, logs, private dependency environments and retained runtimes. Your original
 audio files, other plugins, projects, macOS voices and shared Python/uv installations
-are preserved. A marketplace shared with other plugins is kept and reported.
+are preserved. A marketplace shared with other plugins is kept and reported. Unknown nested files,
+modified packaged files and unsafe directory ownership stop cleanup before native
+uninstall commands run. Move a reported personal file outside Attention and retry;
+there is no force-delete option. Never run this command with sudo.
 
 <details>
 <summary>Preview, offline removal, custom profiles and single-client uninstall</summary>
@@ -210,10 +228,10 @@ Every plugin package includes `uninstall.sh`. From a source checkout or a plugin
 package directory, preview without deleting anything:
 
 ```sh
-bash uninstall.sh --dry-run --offline
+bash -p uninstall.sh --dry-run --offline
 ```
 
-Run `bash uninstall.sh --offline` to preview and confirm locally. There is no
+Run `bash -p uninstall.sh --offline` to preview and confirm locally. There is no
 version number in the command. If you saved the script elsewhere, it also checks
 the usual Codex/Claude plugin caches and Attention's retained runtimes for a
 matching helper. `--offline` refuses to download anything. An older launcher must
@@ -224,6 +242,15 @@ or asks uv to locate an already-installed Python 3.12. It does not install Pytho
 SDK dependencies or sound libraries. If neither is available, restore the Python
 used by Attention and retry. Only use a launcher from a source you trust; its
 SHA-256 check detects changed/mismatched helpers, not a compromised publisher.
+The online command separately checks the outer launcher against the hash in this
+README. You still need to trust these instructions and your local executables;
+this is not a publisher signature. The fixed Git object IDs never follow changes
+to `main`; GitHub API rate limits or a missing object stop the download safely.
+
+Our cleanup uses an exact file inventory and does not recursively erase new files
+added during deletion. Native client commands manage their own caches; the
+uninstaller rechecks before calling them but cannot sandbox those commands or a
+compromised process running as your user. Keep both clients closed during removal.
 
 Use `--yes` only when you explicitly want to skip confirmation; piped text such
 as `echo yes` does not answer the default terminal prompt. The standalone Python

@@ -69,6 +69,7 @@ def build_payload(directory):
     pinned = re.search(r"expected_sha256='([0-9a-f]{64})'", (ROOT / 'uninstall.sh').read_text())
     if not pinned or pinned[1] != digest:
         raise ValueError('uninstall.sh SHA-256 must match scripts/uninstall.py before packaging')
+    run([sys.executable, str(ROOT / 'scripts/update_uninstall_command.py'), '--check'])
     run([sys.executable, str(ROOT / 'scripts/export_requirements.py'), '--check'])
     directory.mkdir(parents=True)
     for name in ['launch.py', 'attention.py', 'run.py', 'mcp_server.py', 'submit.py',

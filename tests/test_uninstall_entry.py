@@ -86,7 +86,7 @@ class UninstallEntryTests(unittest.TestCase):
         result = self.run_entry('--dry-run')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(str(self.data), result.stdout)
-        self.assertTrue((self.data / 'state/assets/intro.mp3').is_file())
+        self.assertTrue((self.data / test_uninstall.ASSET).is_file())
         self.assertEqual((self.base / 'unrelated').read_text(), 'keep me')
 
     def test_piped_yes_is_not_interactive_consent(self):
@@ -158,11 +158,11 @@ class UninstallEntryTests(unittest.TestCase):
             with self.subTest(directory=directory):
                 directory.mkdir(parents=True)
                 helper = directory / 'uninstall.py'
-                shutil.copy2(ROOT / 'scripts/uninstall.py', helper)
+                test_uninstall.write_payload(directory.parent, {'scripts/uninstall.py': (ROOT / 'scripts/uninstall.py').read_bytes()})
                 result = self.run_entry('--dry-run', script=script)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn(str(self.data), result.stdout)
-                helper.unlink()
+                shutil.rmtree(directory.parent)
 
     def test_symlink_helper_is_rejected_even_with_the_correct_bytes(self):
         script = self.detached_entry()
@@ -331,13 +331,59 @@ class UninstallEntryTests(unittest.TestCase):
         env = self.entry_env()
         helper = self.claude / 'plugins/cache/xiaofei-du/attention/0.1.5/scripts/uninstall.py'
         helper.parent.mkdir(parents=True)
-        shutil.copy2(ROOT / 'scripts/uninstall.py', helper)
+        test_uninstall.write_payload(helper.parent.parent, {'scripts/uninstall.py': (ROOT / 'scripts/uninstall.py').read_bytes()})
         result = subprocess.run(['/bin/bash', '-s', '--', '--offline', '--yes'],
                                 input=(ROOT / 'uninstall.sh').read_text(), env=env, cwd=self.base,
                                 capture_output=True, text=True, timeout=15, start_new_session=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(self.data.exists())
         self.assertEqual((self.base / 'unrelated').read_text(), 'keep me')
+
+    def test_online_command_verifies_entry_bytes_before_execution(self):
+        from scripts.update_uninstall_command import command
+        import shlex
+        env = self.entry_env()
+        marker = self.base / 'entry-executed'
+        good = ('#!/bin/bash\nprintf verified > ' + shlex.quote(str(marker)) + '\n').encode()
+        source = self.base / 'downloaded-entry'
+        curl = self.base / 'mock-curl'
+        curl.write_text('#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\n'
+                        '/bin/cp ' + shlex.quote(str(source)) + ' "$2"\n')
+        curl.chmod(0o700)
+        snippet = command(good).replace('/usr/bin/curl', shlex.quote(str(curl)))
+        for shell in ('/bin/bash', '/bin/zsh'):
+            if not Path(shell).exists():
+                continue
+            for modified in (True, False):
+                with self.subTest(shell=shell, modified=modified):
+                    source.write_bytes(good + (b'# altered\n' if modified else b''))
+                    marker.unlink(missing_ok=True)
+                    result = subprocess.run([shell, '-c', snippet], env=env, cwd=self.base,
+                                            capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode == 0, not modified, result.stderr)
+                    self.assertEqual(marker.exists(), not modified)
+                    self.assertFalse(list(self.base.glob('attention-uninstall.*')))
+
+    def test_online_entry_does_not_load_inherited_bash_startup_code(self):
+        from scripts.update_uninstall_command import command
+        import shlex
+        marker = self.base / 'injected'
+        startup = self.base / 'bash-startup'
+        startup.write_text('printf injected > ' + shlex.quote(str(marker)) + '\n')
+        content = b'#!/bin/bash\nexit 0\n'
+        source = self.base / 'entry'
+        source.write_bytes(content)
+        curl = self.base / 'mock-curl'
+        curl.write_text('#!/bin/sh\nwhile [ "$1" != "-o" ]; do shift; done\n'
+                        '/bin/cp ' + shlex.quote(str(source)) + ' "$2"\n')
+        curl.chmod(0o700)
+        snippet = command(content).replace('/usr/bin/curl', shlex.quote(str(curl)))
+        env = dict(self.entry_env(), BASH_ENV=str(startup))
+        # -p on the outer test shell prevents the harness itself from reading BASH_ENV.
+        result = subprocess.run(['/bin/bash', '-p', '-c', snippet], env=env, cwd=self.base,
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(marker.exists())
 
 
 if __name__ == '__main__':
