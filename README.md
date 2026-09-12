@@ -1,5 +1,9 @@
 # Attention! 📣
 
+<a href="https://giphy.com/gifs/cbbc-tracy-beaker-cbbc-star-cYaBD8kxE4PZudHBRA">
+  <img src="https://media.giphy.com/media/cYaBD8kxE4PZudHBRA/giphy.gif" alt="Attention GIF by CBBC on GIPHY" width="360">
+</a>
+
 Your agent has something to report.
 
 Spoken task updates for **Codex and Claude Code on macOS**. When a round finishes,
