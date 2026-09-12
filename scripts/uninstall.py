@@ -244,17 +244,27 @@ def process_start(pid):
 
 
 def processes(roots):
-    output = subprocess.run(['/bin/ps', '-ww', '-axo', 'pid=,uid=,command='], capture_output=True,
+    output = subprocess.run(['/bin/ps', '-ww', '-axo', 'pid=,ppid=,uid=,command='], capture_output=True,
                             text=True, check=True, timeout=10).stdout
+    rows = [line.strip().split(None, 3) for line in output.splitlines()]
+    parents = {int(row[0]): int(row[1]) for row in rows if len(row) == 4}
+    ancestors = set()
+    parent = os.getppid()
+    while parent > 1 and parent not in ancestors:
+        ancestors.add(parent)
+        parent = parents.get(parent, 0)
     result = []
-    for line in output.splitlines():
-        parts = line.strip().split(None, 2)
-        if len(parts) != 3 or int(parts[1]) != os.getuid() or int(parts[0]) == os.getpid():
+    for parts in rows:
+        if len(parts) != 4 or int(parts[2]) != os.getuid() or int(parts[0]) == os.getpid():
             continue
-        if not any(str(root) in parts[2] for root in roots):
+        if not any(str(root) in parts[3] for root in roots):
             continue
         pid = int(parts[0])
         argv = process_argv(pid)
+        # A shell launching this very uninstaller can carry --data-dir. Do not
+        # mistake that argument for an active client; unrelated shells still block.
+        if pid in ancestors and argv and Path(argv[0]).name in ('bash', 'sh'):
+            continue
         # Exact path arguments, never a matching substring in a prompt or shell
         # command. Ancestor uv launchers are not killed along with their children.
         owned = any(Path(arg).is_absolute() and any(Path(arg) == root or root in Path(arg).parents
@@ -350,6 +360,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--yes', action='store_true', help='Erase settings, imported audio and all Attention data')
     parser.add_argument('--dry-run', action='store_true', help='List exact targets without changing anything')
+    parser.add_argument('--interactive', action='store_true', help='Preview and ask in the terminal before erasing')
     parser.add_argument('--data-dir', type=Path, default=os.environ.get('ATTENTION_DATA_DIR',
                         str(Path.home() / 'Library/Application Support/Attention') if sys.platform == 'darwin' else
                         str(Path(os.environ.get('XDG_STATE_HOME', str(Path.home() / '.local/state'))) / 'attention')))
@@ -360,14 +371,45 @@ def main():
         removal = plan(args.data_dir, os.environ.get('CODEX_HOME', str(Path.home() / '.codex')),
                        os.environ.get('CLAUDE_CONFIG_DIR', str(Path.home() / '.claude')))
         if args.dry_run or not args.yes:
-            print(json.dumps({'status': 'preview', 'erase': ['settings', 'custom audio', 'queue', 'logs', 'runtimes', 'dependencies'],
-                              'paths': [str(p) for p in [*removal['targets'], removal['data']]],
-                              'commands': [{'argv': cmd, 'cwd': str(cwd)} for cmd, cwd in removal['commands']],
-                              'retained_shared_sources': removal['retained']}, indent=2))
-            if not args.dry_run:
+            preview = {'status': 'preview', 'erase': ['settings', 'custom audio', 'queue', 'logs', 'runtimes', 'dependencies'],
+                       'paths': [str(p) for p in [*removal['targets'], removal['data']]],
+                       'commands': [{'argv': cmd, 'cwd': str(cwd)} for cmd, cwd in removal['commands']],
+                       'retained_shared_sources': removal['retained']}
+            if args.interactive:
+                print('Attention uninstall\n\nPermanently removes Attention settings, imported audio, '
+                      'summaries, queue, logs and private runtimes.\nCleanup paths:')
+                for path in preview['paths']:
+                    print('  ' + json.dumps(path, ensure_ascii=False))
+                for command in preview['commands']:
+                    print('Client command: ' + json.dumps(command, ensure_ascii=False))
+                for reason in removal['retained']:
+                    print('Keeping: ' + reason)
+                print('Original audio files, other plugins, projects and shared Python/uv are preserved.\n', flush=True)
+            else:
+                print(json.dumps(preview, indent=2))
+            if args.dry_run:
+                return 0
+            if args.interactive:
+                try:
+                    terminal = open('/dev/tty', 'rb+', buffering=0)
+                except OSError:
+                    raise RuntimeError('Interactive uninstall needs a terminal. Use --dry-run to preview, '
+                                       'or explicitly pass --yes to delete.')
+                with terminal:
+                    if not os.isatty(terminal.fileno()):
+                        raise RuntimeError('Interactive uninstall needs a terminal; nothing was removed.')
+                    terminal.write(b'Remove Attention from both clients and permanently delete the listed data? '
+                                   b'Type yes to continue: ')
+                    terminal.flush()
+                    if terminal.readline().strip() != b'yes':
+                        print('Cancelled. Nothing was removed.')
+                        return 0
+                # Preview is not a deletion authorization for a changed installation.
+                if plan(args.data_dir, removal['codex'], removal['claude']) != removal:
+                    raise RuntimeError('Installation changed after preview. Nothing was removed; run again.')
+            else:
                 print('Close both clients, then rerun with --yes to delete all listed Attention data.', file=sys.stderr)
                 return 2
-            return 0
         print(json.dumps(execute(removal), indent=2))
         return 0
     except (OSError, ValueError, RuntimeError, sqlite3.Error, subprocess.SubprocessError) as error:
