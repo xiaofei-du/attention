@@ -4,6 +4,7 @@ import contextlib
 import hashlib
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -35,7 +36,8 @@ def installation_lock(path):
 
 def verified_python(requirements, root):
     identity = json.dumps({'requirements': hashlib.sha256(requirements.read_bytes()).hexdigest(),
-                           'python': sys.version, 'platform': sys.platform}, sort_keys=True)
+                           'python': sys.version, 'platform': sys.platform,
+                           'architecture': platform.machine()}, sort_keys=True)
     revision = hashlib.sha256(identity.encode()).hexdigest()[:24]
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     root.chmod(0o700)
@@ -60,10 +62,12 @@ def verified_python(requirements, root):
         if os.environ.get('UV_CACHE_DIR'):
             environment['UV_CACHE_DIR'] = os.environ['UV_CACHE_DIR']
         environment['UV_NO_PROGRESS'] = '1'
+        wheels = requirements.parent / 'wheels'
+        bundled = ['--find-links', str(wheels)] if wheels.is_dir() else []
         commands = [
             [uv, 'venv', '--no-config', '--python', sys.executable, str(target)],
             [uv, 'pip', 'sync', '--no-config', '--python', str(interpreter), '--require-hashes',
-             '--only-binary', ':all:', '--index-url', 'https://pypi.org/simple', str(requirements)],
+             '--only-binary', ':all:', '--index-url', 'https://pypi.org/simple', *bundled, str(requirements)],
         ]
         try:
             for command in commands:

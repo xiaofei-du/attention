@@ -29,8 +29,13 @@ class DistributionTests(unittest.TestCase):
                 self.assertEqual((spec['name'], spec['version']), ('attention', VERSION))
                 payload_manifest(plugin)
                 for required in ('launch.py', '.mcp.json', 'hooks/hooks.json',
-                                 'native-bin/Attention.app/Contents/MacOS/nkc-player', 'native-bin/nkc-language'):
+                                 'native-bin/Attention.app/Contents/MacOS/nkc-player', 'native-bin/nkc-language',
+                                 'wheels/manifest.json', 'wheels/LICENSE-OpenSSL.txt'):
                     self.assertTrue((plugin / required).is_file(), required)
+                wheel = json.loads((plugin / 'wheels/manifest.json').read_text())
+                files = json.loads((plugin / 'payload.json').read_text())['files']
+                self.assertEqual(files['wheels/' + wheel['wheel']], wheel['sha256'])
+                self.assertIn('--hash=sha256:' + wheel['sha256'], (plugin / 'requirements.txt').read_text())
 
     def test_published_runtime_is_not_stale_after_source_changes(self):
         for folder in ('plugins', 'claude-plugins'):
@@ -45,7 +50,7 @@ class DistributionTests(unittest.TestCase):
                     self.assertEqual((plugin / packaged_name).read_bytes(), (ROOT / source_name).read_bytes(),
                                      'Rebuild the published distribution after changing ' + source_name)
                 for name in files:
-                    source = ROOT / name
+                    source = ROOT / ('packaging/' + name if name.startswith('wheels/') else name)
                     if source.is_file() and not name.startswith('native-bin/'):
                         expected = source.read_bytes()
                         if name == 'summary-prompt.txt':

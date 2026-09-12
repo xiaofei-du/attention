@@ -1,13 +1,13 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.4",
   "files": {
     "attention.py": "6cbfcef863620dec916e0e6f62c980e79a3b6594b6638fa9c10df9ad9b202090",
     "docs/isolation-setup.md": "8f27f84f4b9c78d32d0d565465249d3a8ee0b95477027b013bab4dad69fb138a",
     "docs/upgrading.md": "f83e8a9a0e65a8aeb3a34b2f9b0be27e7748326b525f4943c4d8e50a149fdb79",
     "launch.py": "9fb40a739e386cfc1a6f9367a287c0fb45908ff4b28d6a1435437e51dfccd30c",
     "mcp_server.py": "897e050e301063909168c1965e04060d4fa3804367ba83f50e062d2c7eac408e",
-    "native-bin/Attention.app/Contents/Info.plist": "a560db1b97e810a2c6066b25686ad0b9badd181ce8478fadf368493ed7bd4a36",
-    "native-bin/Attention.app/Contents/MacOS/nkc-player": "f8704adff226a6deff75cdd1a31519dced8551ca5d59f2fd38f5397d27dd2a1b",
+    "native-bin/Attention.app/Contents/Info.plist": "da2077f612aa23b1652d68c2869d91499c19e973872e065edacb9eba42cde83e",
+    "native-bin/Attention.app/Contents/MacOS/nkc-player": "616618b1909828bc0752430a3fc724d6198cd75adac65371daf93e9a0ded0a22",
     "native-bin/Attention.app/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
     "native-bin/nkc-language": "5b750f754d0d35b5d2856f9b126158be558fea09321643d5d86838083f60feb2",
     "nkc/__init__.py": "ec89adc80589d13d6b00d4415537e5ffdb7dc7eb81e281d312ead16a9389f887",
@@ -16,7 +16,7 @@
     "nkc/confirmation.py": "096b6a1bb8736e7dda16e1cbc38b85cd42c962222cd42d4164e165dd85563191",
     "nkc/control_context.py": "52bdcb802a9e0d2e82bc00d7b1d1916c68208184bc979eafd35f490962a21b20",
     "nkc/controls.py": "544996959131e58204ee492eefdd0685084d9d2c4eec97f0ade282a14a63a798",
-    "nkc/dependencies.py": "2f5a7ba7474329607fbc5bab64b643c0d9ed623a9101ae425ef94cdba54bdb5b",
+    "nkc/dependencies.py": "b694f2cf3cc63174fad3b1ad767c0acd11b7eb78eba408746fc477cf437862db",
     "nkc/install.py": "efd7a1aee3517b080f3e6ee89141b597b088a4ff72e9e3c760f4186f4b8b9711",
     "nkc/isolation.py": "dae77cf2beb4618a53f40b68eb6b06fa923cf8c71cd6550344fe10523b98d393",
     "nkc/language.py": "8f112c2b06ccc02461c8234c9f64f0ddd04d34f1c2e5faeca26646785406e44e",
@@ -26,14 +26,14 @@
     "nkc/payload.py": "484ee5845576810afe5363e5627d1ceff4cba896924d045ec1a369d9f804673a",
     "nkc/platform_support.py": "9cdb718d4b2b3d1ec6f7fb7f764a2cf4806dcefbb79fbf95ac12f44fa91a432b",
     "nkc/runtime.py": "1cfb8f7e30625848cb87d356b8643840d73fc267b57c59da06d741e5c9fbe443",
-    "nkc/session_names.py": "8f9dff176df6605564d9a670593d698a18e160f1d34eb953dbcad4f95d379988",
+    "nkc/session_names.py": "2921035308c33d2083421a3c65f67f73f364f4056ba914638d73c6692e233eea",
     "nkc/store.py": "eb4168e774e866eed686d0cdcec3233737b0d83a4697b3a21a5807c0a252c199",
     "nkc/submission.py": "01cc652fc9ffb56c0a8b0f126340fe793915204fdfa97fb6fc4ae447bfb192a7",
     "nkc/summary.py": "195dece4b551a38f440adad98c11faa4aa472690933fedf54f2e4039f5e5c5b9",
     "nkc/summary_preferences.py": "34293c365c47c3c6cada3121ca30944f50074e020834bd3d357ca7023a5cd0c5",
     "nkc/voice_cache.py": "1d2f6cba63d73be041f573a2b9349a16c80f152d2b3bbcaf9b0f375b1586d6e4",
     "nkc/voice_setup.py": "3a6b0f68bf2999c3a1f4ad8e3fb6eb6bec5b79ceeb4533b5526da09c57d79bcb",
-    "requirements.txt": "3f7db6e6ae393d57d4fbdf3ce3d84ea69824b33a9143af773b369e532f52cf0a",
+    "requirements.txt": "e0f76161f173017d2f0cc49bfc0b0658e74cb0481680603cee0c2d021d225088",
     "run.py": "6433b1600d1f504ca159b362593c8a39288a138ba801dbb3490f8ccacaa4628b",
     "scripts/prepare_isolation.py": "f00d0d17d3b7acc11c43760600550aee64666a389daa3c62708a986910380076",
     "scripts/uninstall.py": "a29f842dcc98fc179c0cddd9ce504de85cd3b6727ac5a2377aa96c0fd0bc351d",
@@ -41,6 +41,9 @@
     "skills/attention-help/SKILL.md": "87d6b93ed7f207a94ff8c9721d4171614dc33c73964c5addb62b5ad2c2654d33",
     "submit.py": "3a14b1cd623e0adf306249f7362431172b46973c0d0abcb6d0ad3a9269b239eb",
     "summary-isolated-prompt.txt": "7abf168a81119729bab0b98f08d8dc0dafa651a7c4f48ec24fa91ef880d88273",
-    "summary-prompt.txt": "b74d71bb28067d2773dc2afcaaa49d7f90659ede08e1c7679a38cc133c92bf4b"
+    "summary-prompt.txt": "b74d71bb28067d2773dc2afcaaa49d7f90659ede08e1c7679a38cc133c92bf4b",
+    "wheels/LICENSE-OpenSSL.txt": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+    "wheels/cryptography-50.0.1-cp312-abi3-macosx_14_0_x86_64.whl": "ebe053f4acd15a39f0695693f77c93532d1a2a6adc56ef20262e9259e4c548b3",
+    "wheels/manifest.json": "21ca78772390bc184df63335a4db58b389222d4ea60b00cfeef4989cfd34b3f6"
   }
 }

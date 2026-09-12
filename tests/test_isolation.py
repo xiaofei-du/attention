@@ -18,6 +18,12 @@ class IsolationTests(unittest.TestCase):
             (self.root / name).mkdir(mode=0o700)
         for name in ('run.py', 'mcp_server.py', 'submit.py'):
             (self.root / 'runtime' / name).write_text('# trusted\n')
+        self.bin = self.root / 'host-bin'
+        self.bin.mkdir()
+        for name in ('codex', 'claude'):
+            command = self.bin / name
+            command.write_text('#!/bin/sh\nexit 1\n')
+            command.chmod(0o700)
         self.python = Path('/usr/bin/python3')
         self.args = dict(project=self.root/'project', runtime=self.root/'runtime',
                          state=self.root/'state', socket_path=self.root/'control'/'s.sock',
@@ -25,8 +31,21 @@ class IsolationTests(unittest.TestCase):
                          credential_paths=[self.root/'credentials'])
 
     def generate(self, **changes):
-        with patch('nkc.isolation.sys.platform', 'darwin'):
+        # These tests generate launchers without starting an installed client.
+        with patch('nkc.isolation.sys.platform', 'darwin'), patch.dict(os.environ, {'PATH': str(self.bin)}):
             return prepare_isolation(**(self.args | changes))
+
+    def test_missing_host_cli_fails_without_creating_output(self):
+        for name in ('codex', 'claude'):
+            command = self.bin / name
+            with self.subTest(name=name):
+                command.chmod(0o600)
+                try:
+                    with self.assertRaisesRegex(ValueError, name + ' CLI must be installed'):
+                        self.generate()
+                    self.assertFalse(self.args['output'].exists())
+                finally:
+                    command.chmod(0o700)
 
     def test_private_reviewable_files_and_exact_socket(self):
         out = self.generate()
@@ -112,7 +131,10 @@ class IsolationTests(unittest.TestCase):
                      'Explicit opt-in real Codex sandbox probe; no model/audio')
 class RealCodexSandboxProbe(unittest.TestCase):
     setUp = IsolationTests.setUp
-    generate = IsolationTests.generate
+
+    def generate(self, **changes):
+        # Opt-in probes keep real host discovery and execute the actual sandbox.
+        return prepare_isolation(**(self.args | changes))
 
     def test_sandboxed_client_stages_summary_with_database_denied(self):
         import shutil

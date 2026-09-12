@@ -32,7 +32,7 @@ def _codex_name(session_id, home):
             paths.append((int(version[1]), path))
     for _, path in sorted(paths, reverse=True)[:4]:
         try:
-            with closing(sqlite3.connect(path.resolve().as_uri() + '?mode=ro', timeout=0.1)) as db:
+            with closing(sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True, timeout=0.1)) as db:
                 columns = {row[1] for row in db.execute('PRAGMA table_info(threads)')}
                 if 'id' not in columns:
                     continue

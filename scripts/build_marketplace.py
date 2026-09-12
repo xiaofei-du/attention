@@ -10,11 +10,12 @@ import plistlib
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '0.1.3'
+VERSION = '0.1.4'
 MARKETPLACE_NAME = 'xiaofei-du'
 
 
@@ -63,6 +64,7 @@ def build_native(target):
 
 
 def build_payload(directory):
+    run([sys.executable, str(ROOT / 'scripts/export_requirements.py'), '--check'])
     directory.mkdir(parents=True)
     for name in ['launch.py', 'attention.py', 'run.py', 'mcp_server.py', 'submit.py',
                  'summary-prompt.txt', 'summary-isolated-prompt.txt']:
@@ -76,6 +78,7 @@ def build_payload(directory):
     for name in ('isolation-setup.md', 'upgrading.md'):
         shutil.copy2(ROOT / 'docs' / name, directory / 'docs' / name)
     shutil.copy2(ROOT / 'packaging/requirements.txt', directory / 'requirements.txt')
+    shutil.copytree(ROOT / 'packaging/wheels', directory / 'wheels')
     prompt = directory / 'summary-prompt.txt'
     prompt.write_text(prompt.read_text().replace('no-keyboard-code MCP', 'attention MCP'))
     build_native(directory / 'native-bin')
