@@ -14,6 +14,18 @@ agent. Multiple sessions share one playback queue, so updates take turns.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
+## Who is this for?
+
+This is for you if:
+
+- The usual session notification feels a bit boring.
+- You're running several sessions and can't tell which one just finished.
+- You work from home and want a little more fun in your day.
+
+If it gets too noisy, ask your agent to **“Turn off speech globally.”** Enjoy some
+quiet alone time, then turn it back on whenever you like. See [Make it yours](#make-it-yours)
+below for the controls.
+
 ## Install
 
 **Alpha:** install directly from [xiaofei-du/attention](https://github.com/xiaofei-du/attention).
