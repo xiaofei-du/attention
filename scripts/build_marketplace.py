@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '0.1.5'
+VERSION = '0.1.6'
 MARKETPLACE_NAME = 'xiaofei-du'
 
 

@@ -712,7 +712,8 @@ def main():
                     terminal.flush()
                     if terminal.readline().strip() != b'yes':
                         print('Cancelled. Nothing was removed.')
-                        return 0
+                        # Let wrappers preserve themselves when the user cancels.
+                        return 3
                 # Preview is not a deletion authorization for a changed installation.
                 if plan(args.data_dir, removal['codex'], removal['claude']) != removal:
                     raise RuntimeError('Installation changed after preview. Nothing was removed; run again.')

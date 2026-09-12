@@ -25,9 +25,9 @@ class SetupEntryTests(unittest.TestCase):
     def write_uv(self, target):
         target.write_text('#!/bin/bash\n'
                           'if [[ "$1" == --version ]]; then echo "uv 0.12.10"; exit 0; fi\n'
-                          '[[ "$1 $2 $3 $4 $5 $6 $7 $8" == '
-                          '"run --no-config --no-project --isolated --python 3.12 python -I" ]] || exit 91\n'
-                          'shift 8\nexec ' + repr(sys.executable) + ' -I "$@"\n')
+                          'if [[ "$*" == "python install --no-config --no-bin 3.12" ]]; then exit 0; fi\n'
+                          '[[ "$*" == "python find --managed-python --system --no-project --no-config --offline --no-python-downloads 3.12" ]] || exit 91\n'
+                          'printf "%s\\n" ' + repr(sys.executable) + '\n')
         target.chmod(0o700)
 
     def run_entry(self, *args, script=None, env=None):
@@ -196,3 +196,24 @@ class SetupEntryTests(unittest.TestCase):
         self.assertIn('Stale setup', result.stderr)
         self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
         self.assertEqual(subprocess.run([*command, '--check'], capture_output=True).returncode, 0)
+
+    @unittest.skipUnless(shutil.which('uv'), 'real uv is needed for interpreter-discovery regression')
+    def test_real_uv_requires_managed_python_and_does_not_execute_project_python(self):
+        real_uv = shutil.which('uv')
+        env = self.entry_env(uv=False)
+        (self.bin / 'uv').symlink_to(real_uv)
+        project_bin = self.base / 'project/.venv/bin'
+        project_bin.mkdir(parents=True)
+        marker = self.base / 'project-python-executed'
+        for name in ('python', 'python3', 'python3.12'):
+            p = project_bin / name
+            p.write_text('#!/bin/bash\n/usr/bin/touch "' + str(marker) + '"\n'
+                         'exec "' + sys.executable + '" "$@"\n')
+            p.chmod(0o700)
+        env.update(PATH=str(project_bin) + ':' + str(self.bin),
+                   UV_PYTHON_INSTALL_DIR=str(self.base / 'no-managed-python'),
+                   UV_CACHE_DIR=str(self.base / 'uv-cache'), UV_PYTHON_DOWNLOADS='never')
+        result = self.run_entry('--client', 'both', env=env)
+        self.assertFalse(marker.exists(), 'setup executed a project Python interpreter')
+        self.assertNotEqual(result.returncode, 0, 'No managed Python or downloads were available')
+        self.assertEqual(self.mutations(), [])

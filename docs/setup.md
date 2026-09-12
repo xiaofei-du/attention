@@ -4,7 +4,20 @@ One installer for Codex, Claude Code, or both. It uses the same native plugin
 installation as the manual commands; it does not create another copy of your
 hooks or change your speech preferences.
 
-On **macOS 14.2+**, open Terminal and run:
+On **macOS 14.2+**, with Homebrew installed:
+
+```sh
+brew install xiaofei-du/tap/attention
+attention setup
+```
+
+Homebrew installs `uv` and the small command wrapper. Run `attention setup` to
+choose your clients and install their plugins. Homebrew installation alone does
+not change your client profiles. See [Homebrew setup and removal](homebrew.md).
+
+## Without Homebrew
+
+Open Terminal and run:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/xiaofei-du/attention/main/setup.sh | /bin/bash -p
@@ -85,9 +98,9 @@ from a version of the documentation you trust:
   trap '/bin/rm -f -- "$entry"' EXIT
   /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
     -H 'Accept: application/vnd.github.raw+json' \
-    https://api.github.com/repos/xiaofei-du/attention/git/blobs/9a95e638b68025af59b446f9a29a2152e0078221 -o "$entry"
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/af5fef8db683b7dd523939cb44cc0272cada31ac -o "$entry"
   digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
-  [ "${digest%% *}" = 'b40312d306208ac650860afb14abe44f882a6b9cf20c4cc086b270a014ddd31f' ] || {
+  [ "${digest%% *}" = '9b5bb431563316e4ac3d5a7c530033363d86213abc27bb3c01bba81ac15fd843' ] || {
     printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
   }
   /bin/bash -p "$entry"

@@ -14,12 +14,14 @@ main() (
                 case "$client" in codex|claude|both) ;; *) printf '%s\n' 'Choose --client codex, claude or both.' >&2; exit 2 ;; esac
                 args+=(--client "$client") ;;
             --install-uv) install_uv=true ;;
+            --update) args+=(--update) ;;
             --dry-run) dry_run=true; args+=(--dry-run) ;;
             --help|-h)
                 printf '%s\n' 'Attention setup: install the native Codex and/or Claude Code plugin.' \
                     'Usage: bash setup.sh [--client codex|claude|both] [--dry-run] [--install-uv]' \
                     'Without --client, choose in the terminal. Existing plugins/settings are preserved.' \
                     '--install-uv: explicitly allow installing missing uv; otherwise ask first.' \
+                    '--update: update existing enabled plugins instead of installing; default to available clients.' \
                     '--dry-run: preview; never install uv, marketplaces or plugins.'
                 exit 0 ;;
             *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
@@ -87,8 +89,8 @@ main() (
     local scratch helper='' source_dir='' digest
     scratch="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/attention-setup.XXXXXXXX")"
     trap 'result=$?; /bin/rm -f -- "$scratch/setup.py" "$scratch/uv-install.sh" "$scratch/sha256sum"; /bin/rmdir -- "$scratch"; exit "$result"' EXIT
-    readonly helper_sha256='51dbcba9b6dcfac4c04c8396f71f5145a2737369818287cc4b52418349fdadcb'
-    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/9bfa0c01eeac7d21c4487558d3a49bd1f89bb65f'
+    readonly helper_sha256='1c9e04bc9608de58d22cf33f3f1815eb97a267b9c3fada660697bc8b250800a3'
+    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/8d511f799815a00bd97144c230b031914be84933'
     checksum() {
         digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$1")"
         [[ "${digest%% *}" = "$2" ]] || { printf '%s\n' 'SHA-256 mismatch. Downloaded code was not run.' >&2; return 1; }
@@ -137,7 +139,13 @@ main() (
         printf '%s\n' 'uv is not usable on PATH. Open a new terminal, check uv --version, then retry.' >&2; exit 1
     fi
     printf '%s\n' 'Preparing Python 3.12 for setup; the first download may take a moment.'
-    "$uv" run --no-config --no-project --isolated --python 3.12 python -I "$helper" ${args[@]+"${args[@]}"}
+    # Ensure the same managed interpreter is available for later offline removal.
+    # Do not select a project's virtualenv or create Python shims on the user's PATH.
+    "$uv" python install --no-config --no-bin 3.12
+    local python
+    python="$("$uv" python find --managed-python --system --no-project --no-config --offline --no-python-downloads 3.12)"
+    [[ "$python" = /* && -x "$python" ]] || { printf '%s\n' 'No usable managed Python was found.' >&2; exit 1; }
+    "$python" -I "$helper" ${args[@]+"${args[@]}"}
 )
 
 main "$@"

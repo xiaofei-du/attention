@@ -41,13 +41,14 @@ class UninstallEntryTests(unittest.TestCase):
         shutil.copy2(ROOT / 'uninstall.sh', directory / 'uninstall.sh')
         return directory / 'uninstall.sh'
 
-    def interactive(self, answer, before_answer=None):
-        env = self.entry_env()
+    def interactive(self, answer, before_answer=None, entry=None, arguments=None, env=None):
+        env = env or self.entry_env()
         status = self.base / 'terminal-status'
         harness = self.base / 'terminal-harness.sh'
-        harness.write_text('#!/bin/bash\n/bin/bash "$1" --offline\nresult=$?\n'
-                           'printf "%s" "$result" > "$2"\nexit "$result"\n')
-        command = ['/bin/bash', str(harness), str(ROOT / 'uninstall.sh'), str(status)]
+        harness.write_text('#!/bin/bash\nentry="$1"; status="$2"; shift 2\n/bin/bash -p "$entry" "$@"\nresult=$?\n'
+                           'printf "%s" "$result" > "$status"\nexit "$result"\n')
+        command = ['/bin/bash', str(harness), str(entry or ROOT / 'uninstall.sh'), str(status),
+                   *(arguments if arguments is not None else ['--offline'])]
         if sys.platform == 'darwin':
             command = ['/usr/bin/script', '-q', '/dev/null', *command]
         else:
@@ -138,7 +139,7 @@ class UninstallEntryTests(unittest.TestCase):
 
     def test_terminal_no_leaves_installation_untouched(self):
         result = self.interactive('no')
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.returncode, 3, result.stderr)
         self.assertIn('Cancelled', result.stdout)
         self.assertTrue(self.data.exists())
 

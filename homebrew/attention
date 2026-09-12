@@ -1,0 +1,79 @@
+#!/bin/bash -p
+# Homebrew owns this entry; the existing helpers own plugin setup and cleanup.
+main() (
+    set -euo pipefail
+    unset BASH_ENV ENV CDPATH
+    local source="${BASH_SOURCE[0]}" directory target hops=0
+    while [[ -L "$source" ]]; do
+        (( hops < 40 )) || { printf '%s\n' 'Invalid Attention command symlink.' >&2; exit 1; }
+        hops=$((hops + 1))
+        directory="$(cd -P -- "$(/usr/bin/dirname -- "$source")" && pwd)"
+        target="$(/usr/bin/readlink -- "$source")"
+        case "$target" in /*) source="$target" ;; *) source="$directory/$target" ;; esac
+    done
+    directory="$(cd -P -- "$(/usr/bin/dirname -- "$source")" && pwd)"
+    case "${1:---help}" in
+        --help|-h|help)
+            printf '%s\n' 'Attention! 📣' \
+                'attention setup [--client codex|claude|both] [--dry-run]' \
+                'attention update [--client codex|claude|both] [--dry-run]' \
+                'attention uninstall [--dry-run | --yes] [--offline] [--data-dir PATH]' \
+                'attention --version' \
+                'Setup uses native plugin managers; review hooks in your client afterward.' \
+                'Uninstall previews and confirms cleanup, then removes this Homebrew command.'
+            exit 0 ;;
+        --version) printf 'Attention installer %s\n' "$(<"$directory/VERSION")"; exit 0 ;;
+        setup|update|uninstall) ;;
+        *) printf '%s\n' 'Unknown command. Run attention --help.' >&2; exit 2 ;;
+    esac
+    local action="$1" uv_bin brew arg preview=false custom=false result python
+    shift
+    uv_bin="$(<"$directory/uv-bin")"
+    [[ "$uv_bin" = /* ]] || { printf '%s\n' 'Invalid Homebrew uv path. Reinstall Attention.' >&2; exit 1; }
+    export PATH="$uv_bin:${PATH:-/usr/bin:/bin:/usr/sbin:/sbin}"
+    if [[ "$action" = setup ]]; then
+        exec /bin/bash -p "$directory/setup.sh" "$@"
+    fi
+    if [[ "$action" = update ]]; then
+        exec /bin/bash -p "$directory/setup.sh" --update "$@"
+    fi
+    for arg in "$@"; do
+        case "$arg" in
+            --help|-h) exec /bin/bash -p "$directory/uninstall.sh" "$@" ;;
+            --dry-run) preview=true ;;
+            --data-dir) custom=true ;;
+        esac
+    done
+    # Use only the uv-managed interpreter prepared by setup. A project's active
+    # virtualenv must not supply Python while inspecting or deleting user data.
+    python="$("$uv_bin/uv" python find --managed-python --system --no-project --no-config --offline --no-python-downloads 3.12 2>/dev/null || true)"
+    if [[ "$python" != /* || ! -x "$python" || ! "${python%/*}/python3" -ef "$python" ]]; then
+        printf '%s\n' 'The uv-managed Python used by Attention is unavailable. Restore it before cleanup.' \
+            'If you only installed this command and never ran setup, use brew uninstall xiaofei-du/tap/attention.' >&2
+        exit 1
+    fi
+    export PATH="${python%/*}:$PATH"
+    if [[ -n "${CODEX_HOME:-}${CLAUDE_CONFIG_DIR:-}${ATTENTION_DATA_DIR:-}" ]]; then custom=true; fi
+    brew="$(<"$directory/brew-path")"
+    if ! "$preview" && ! "$custom"; then
+        [[ "$brew" = /* && -x "$brew" ]] || { printf '%s\n' 'Homebrew is unavailable. Restore it before complete uninstall.' >&2; exit 1; }
+    fi
+    if "$custom"; then
+        printf '%s\n' 'Custom profile: keeping the shared Homebrew command for other profiles.'
+    else
+        printf '%s\n' 'After confirmed cleanup, Homebrew will also remove the Attention command.' \
+            'Shared uv/Python and the publisher tap will be kept.'
+    fi
+    if /bin/bash -p "$directory/uninstall.sh" "$@"; then result=0; else result=$?; fi
+    # The helper distinguishes terminal cancellation from completed removal.
+    if (( result == 3 )); then exit 0; fi
+    (( result == 0 )) || exit "$result"
+    if "$preview" || "$custom"; then exit 0; fi
+    if ! HOMEBREW_NO_AUTOREMOVE=1 HOMEBREW_NO_AUTO_UPDATE=1 "$brew" uninstall --formula xiaofei-du/tap/attention; then
+        printf '%s\n' 'Attention data was cleaned, but Homebrew removal failed.' \
+            'Retry: HOMEBREW_NO_AUTOREMOVE=1 brew uninstall xiaofei-du/tap/attention' >&2
+        exit 1
+    fi
+)
+
+main "$@"
