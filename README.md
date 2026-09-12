@@ -51,8 +51,8 @@ below for the controls.
 
 If you find Attention useful or have an idea for what to add, give me a shout:
 
-[![X: @xiaofeidu283](https://img.shields.io/badge/X-%40xiaofeidu283-000000?style=flat-square&logo=x&logoColor=white&labelColor=000000)](https://x.com/xiaofeidu283)
-[![Threads: @smilefei.du](https://img.shields.io/badge/Threads-%40smilefei.du-000000?style=flat-square&logo=threads&logoColor=white&labelColor=000000)](https://www.threads.com/@smilefei.du)
+[![X: @xiaofeidu283](https://img.shields.io/badge/X-%40xiaofeidu283-9A4329?style=flat-square&logo=x&logoColor=white&labelColor=9A4329)](https://x.com/xiaofeidu283)
+[![Threads: @smilefei.du](https://img.shields.io/badge/Threads-%40smilefei.du-9A4329?style=flat-square&logo=threads&logoColor=white&labelColor=9A4329)](https://www.threads.com/@smilefei.du)
 
 ## Install
 
