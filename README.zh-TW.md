@@ -11,10 +11,10 @@
   <a href="#環境需求">
     <img src="https://img.shields.io/badge/macOS-14.2%2B-007AFF" alt="macOS 14.2 或更新版本">
   </a>
-  <a href="#加入插件">
+  <a href="#安裝">
     <img src="https://img.shields.io/badge/Codex-plugin-17876D" alt="Codex 插件">
   </a>
-  <a href="#加入插件">
+  <a href="#安裝">
     <img src="https://img.shields.io/badge/Claude_Code-plugin-D97757" alt="Claude Code 插件">
   </a>
   <a href="LICENSE">
@@ -70,7 +70,7 @@ Homebrew 會準備好 `uv`；安裝精靈透過各自的原生插件管理器安
 既有設定與已停用的插件都會保留原狀。
 
 沒有 Homebrew？可以使用[終端機安裝精靈](docs/setup.md#without-homebrew)，
-或依照下方的手動步驟操作。不需要下載 ZIP、建立本機 marketplace 資料夾，也不需要自行編譯。
+或展開下方的 **「手動安裝（可選）」**。不需要下載 ZIP、建立本機 marketplace 資料夾，也不需要自行編譯。
 安裝後，使用 `attention update` 更新已安裝且啟用的插件，使用 `attention uninstall`
 完整移除。詳情見 [Homebrew 命令指南](docs/homebrew.md)。
 
@@ -82,19 +82,28 @@ Homebrew 會準備好 `uv`；安裝精靈透過各自的原生插件管理器安
 - **Codex 或 Claude Code**，且可在終端機執行 `codex` 或 `claude` 命令。
   原生 session 控制已在 Codex CLI 0.154.0 和 Claude Code 2.1.268 上測試；
   較舊的客戶端可能需要更新。
-- **uv**，終端機與 coding app 都必須能找到它。使用 Homebrew 的話：
-
-  ```sh
-  brew install uv
-  ```
-
-  其他安裝方式見 [uv 安裝指南](https://docs.astral.sh/uv/getting-started/installation/)。
+- **uv**，終端機與 coding app 都必須能找到它。透過 Homebrew 安裝 Attention 時會自動安裝，
+  無需另外安裝。
 
 首次啟動會下載 Python 3.12 和固定版本的 MCP 相依套件，因此需要連網，也可能比後續啟動慢。
 使用預先打包的插件不需要 Xcode。文字播報需要可用的系統音色；如果沒有，Attention
 會略過語音，並說明如何下載。
 
-### 加入插件
+<a id="加入插件"></a>
+<details>
+<summary>手動安裝（可選）</summary>
+
+**已經執行 `attention setup` 或終端機安裝精靈？請跳過本節，直接[啟用並試播](#啟用並試播)。**
+精靈已經加入 marketplace，並安裝了你選擇的插件。
+
+只有想自行透過原生插件管理器安裝時，才需要以下步驟。先確認已安裝 `uv`。
+如果尚未安裝，而且你使用 Homebrew，可以執行：
+
+```sh
+brew install uv
+```
+
+其他安裝方式見 [uv 安裝指南](https://docs.astral.sh/uv/getting-started/installation/)。
 
 在終端機的任意目錄執行以下命令。如果曾安裝較早的本機 Alpha 版本，請先參考
 [從本機安裝切換](docs/upgrading.md#switch-from-a-local-installation)。
@@ -117,6 +126,8 @@ claude plugin install attention@xiaofei-du
 
 `xiaofei-du/attention` 是 GitHub repository。`attention@xiaofei-du`
 表示從這位發布者的 marketplace 選取 Attention 插件。
+
+</details>
 
 ### 啟用並試播
 
@@ -145,7 +156,7 @@ claude plugin install attention@xiaofei-du
 
 | 想做什麼 | 可以這樣說 |
 | --- | --- |
-| 文字開場 | 「把開場改成 hey sunshine。」 |
+| 文字開場 | 「把開場改成 你好美女」 |
 | Apple 提示音 | 「列出可用的 Apple 開場音效。」然後挑一個。 |
 | 自己的音檔 | 「用這個檔案當我的開場音效。」並提供本機音檔。 |
 | 不要開場 | 「移除開場。」 |
