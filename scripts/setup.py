@@ -205,9 +205,13 @@ def main(argv=None):
     if 'codex' in clients:
         print('Codex: open Hooks or run /hooks; find attention@xiaofei-du and Trust UserPromptSubmit and Stop.')
     if 'claude' in clients:
-        print('Claude Code: reopen or run /reload-plugins; review Attention’s hook permissions when prompted.')
+        print('Claude Code: reopen or run /reload-plugins to load the enabled plugin’s hooks; '
+              'no Codex-style per-hook Trust step is required.')
     print('First launch downloads Python/MCP dependencies and can take a little longer.\n'
-          'Then start a new conversation and ask a short question to try playback.\n'
+          'Then start a new conversation and paste:\n'
+          '  Please reply only with: “This is an Attention voice notification.”\n'
+          'With fresh-install defaults, listen for “hey sunshine”, then the sentence above.\n'
+          'Hearing it confirms playback; seeing the text alone does not.\n'
           'Existing disabled plugins and speech preferences stay unchanged.')
     return 0
 

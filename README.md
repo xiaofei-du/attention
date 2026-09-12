@@ -63,8 +63,8 @@ brew install xiaofei-du/tap/attention
 attention setup
 ```
 
-Choose Codex, Claude Code, or both, then reopen your client and review Attention's
-hooks. Homebrew prepares `uv`; the wizard installs through your native plugin
+Choose Codex, Claude Code, or both, then follow [Enable and try it](#enable-and-try-it).
+Homebrew prepares `uv`; the wizard installs through your native plugin
 managers. Existing settings and disabled plugins stay as you left them.
 
 No Homebrew? Use the [terminal setup wizard](docs/setup.md#without-homebrew) or the
@@ -123,12 +123,19 @@ selects the Attention plugin from that publisher’s marketplace.
 ### Enable and try it
 
 1. Reload the plugin or reopen your client after installation.
-2. Review and enable the plugin's hooks when your client requests it. In Codex,
-   open **Hooks** in the app or run `/hooks` in the CLI, find
+2. In **Codex**, open **Hooks** in the app or run `/hooks` in the CLI, find
    `attention@xiaofei-du`, and Trust **UserPromptSubmit** and **Stop**.
-   Claude Code also has **PreToolUse**, used only to identify session-control calls.
-3. Start a new conversation and ask a short question. On a fresh installation,
-   the completed reply should be announced with **hey sunshine**.
+   **Claude Code** loads the hooks when the plugin is enabled; it does not require
+   Codex's per-hook Trust step. Reopen Claude Code or run `/reload-plugins` to load
+   a newly installed plugin. It also has **PreToolUse**, used only to identify
+   session-control calls.
+3. Start a new conversation and paste:
+
+   > Please reply only with: “This is an Attention voice notification.”
+
+   With fresh-install defaults, you should hear **hey sunshine**, followed by
+   **This is an Attention voice notification.** Hearing it confirms playback;
+   seeing the text alone does not. Existing speech preferences stay unchanged.
 4. Ask **“Attention help”** to see the available settings.
 
 Ordinary playback does not need microphone or system-audio recording permission.
@@ -187,8 +194,9 @@ for controls, summary preferences, and privacy details.
   installation preserves previous mute choices.
 - **`uv` not found or MCP startup timed out:** confirm `uv --version` works and
   the coding app can find it. Reload after dependency setup completes.
-- **A voice is missing:** follow the download notice, then ask Attention to list
-  voices again. Voice selection does not automatically download or preview audio.
+- **A voice is missing:** [download an Apple speech voice](#download-apple-speech-voices),
+  then ask Attention to list voices again. Voice selection does not automatically
+  download or preview audio.
 - **Other media stays loud:** ask to enable media lowering and follow the system
   permission prompt. Bluetooth and multi-output setups have not been validated.
 - **Updating an existing install:** finish active tasks first, then follow
@@ -197,6 +205,24 @@ for controls, summary preferences, and privacy details.
 - **Moving from the old no-keyboard-code prototype:** follow
   [the migration notes](docs/installation.md#existing-no-keyboard-code-users)
   before removing old hooks, to preserve settings and avoid duplicate notifications.
+
+### Download Apple speech voices
+
+1. Open **System Settings → Accessibility → Read & Speak**. On macOS Sonoma 14
+   and Sequoia 15, this is called **Spoken Content**.
+2. Open the **ⓘ** button next to **System voice**. On Sonoma, use
+   **System voice → Manage Voices** instead.
+3. Choose a language, then a voice to download. In Sonoma, click its download
+   button. Keep your Mac connected to the internet and wait for the download to
+   finish; the voice is unavailable until then. See
+   [Apple's voice guide](https://support.apple.com/guide/mac-help/mchlp2290/mac)
+   for your macOS version.
+4. Back in your agent, ask **“Show installed voices.”** Attention refreshes its
+   voice list. To use one, ask **“Use [voice name] as my voice”**, using a name
+   from that list, then repeat the [notification test](#enable-and-try-it).
+
+Available languages and voices depend on Apple. Downloading a voice does not
+change your saved Attention voice preferences.
 
 ## Uninstall
 
