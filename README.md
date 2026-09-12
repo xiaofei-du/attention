@@ -14,11 +14,6 @@ agent. Multiple sessions share one playback queue, so updates take turns.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
-**Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
-(MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
-agent and say **“Use this file as my starter.”** This is a custom opening sound;
-the spoken reply or summary follows it.
-
 ## Install
 
 **Alpha:** install directly from [xiaofei-du/attention](https://github.com/xiaofei-du/attention).
@@ -112,6 +107,11 @@ Starters support **text, Apple built-in sounds, custom audio, or none**. Custom
 files can be **MP3, WAV, M4A, AIF/AIFF**, up to **30 seconds / 20 MiB**. Attention
 copies the selected file locally. Audio replaces the text opening; it does not
 upload the file. Your opening stays fixed until you change it.
+
+**Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
+(MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
+agent and say **“Use this file as my starter.”** This is a custom opening sound;
+the spoken reply or summary follows it.
 
 Global mute stops current speech, clears pending updates, and discards new ones
 while off. Re-enabling preserves individually muted sessions and does not replay
