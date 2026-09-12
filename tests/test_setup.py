@@ -35,6 +35,18 @@ elif args == ['plugin', 'marketplace', 'add', 'xiaofei-du/attention']:
                         'marketplaceSource':{'sourceType':'git','source':'https://github.com/xiaofei-du/attention.git'}}]
                       if name == 'codex' else [{'name':'xiaofei-du','source':'github','repo':'xiaofei-du/attention','installLocation':'/cache/marketplace'}])
     state.write_text(json.dumps(data))
+elif args == ['plugin','marketplace','upgrade' if name == 'codex' else 'update','xiaofei-du']:
+    if data.get('fail_refresh'): sys.exit(14)
+elif args == (['plugin','add','attention@xiaofei-du','--json'] if name == 'codex' else
+              ['plugin','update','attention@xiaofei-du','--scope','user','--json']):
+    if data.get('fail_update'): sys.exit(15)
+    version = data.get('next_version', '0.1.6')
+    if not data.get('no_update'):
+        data['plugins'][0]['version'] = version
+        data['plugins'][0]['enabled'] = True
+        state.write_text(json.dumps(data))
+    print(json.dumps({'pluginId':'attention@xiaofei-du', 'version':version} if name=='codex' else
+                     {'pluginId':'attention@xiaofei-du', 'outcome':'ok', 'newVersion':version}))
 elif args == (['plugin','add','attention@xiaofei-du'] if name == 'codex' else
               ['plugin','install','attention@xiaofei-du','--scope','user']):
     if data.get('fail_install'): sys.exit(13)
@@ -82,6 +94,74 @@ class SetupTests(unittest.TestCase):
         path = self.base / 'calls'
         calls = [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
         return [c for c in calls if 'list' not in c]
+
+
+    def test_update_refreshes_both_plugins_without_adding_marketplaces(self):
+        self.assertEqual(self.run_setup('--client', 'both').returncode, 0)
+        (self.base / 'calls').unlink()
+        result = self.run_setup('--update')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('0.1.6', result.stdout)
+        self.assertEqual(self.mutations(), [
+            ['codex','plugin','marketplace','upgrade','xiaofei-du'],
+            ['codex','plugin','add','attention@xiaofei-du','--json'],
+            ['claude','plugin','marketplace','update','xiaofei-du'],
+            ['claude','plugin','update','attention@xiaofei-du','--scope','user','--json'],
+        ])
+        for client in ('codex','claude'):
+            data = json.loads((self.base / (client + '.json')).read_text())
+            self.assertEqual(len(data['plugins']), 1)
+            self.assertEqual(data['plugins'][0]['version'], '0.1.6')
+
+    def test_update_skips_disabled_plugins_instead_of_reenabling(self):
+        self.assertEqual(self.run_setup('--client','both').returncode, 0)
+        for client in ('codex','claude'):
+            p = self.base / (client + '.json')
+            data = json.loads(p.read_text())
+            data['plugins'][0]['enabled'] = False
+            p.write_text(json.dumps(data))
+        (self.base / 'calls').unlink()
+        result = self.run_setup('--update')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('disabled', result.stdout)
+        self.assertEqual(self.mutations(), [])
+
+    def test_update_does_not_install_into_unused_client(self):
+        self.assertEqual(self.run_setup('--client', 'codex').returncode, 0)
+        (self.base / 'calls').unlink()
+        result = self.run_setup('--update')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(c[0] == 'claude' for c in self.mutations()))
+
+    def test_update_dry_run_has_no_mutations(self):
+        self.assertEqual(self.run_setup('--client','both').returncode, 0)
+        (self.base / 'calls').unlink()
+        result = self.run_setup('--update', '--dry-run')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Would update', result.stdout)
+        self.assertEqual(self.mutations(), [])
+
+    def test_update_handles_unavailable_unused_client(self):
+        self.assertEqual(self.run_setup('--client','codex').returncode, 0)
+        (self.bin / 'claude').unlink()
+        result = self.run_setup('--update')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('0.1.6', result.stdout)
+
+    def test_update_failure_preserves_other_client_and_reports_partial_result(self):
+        self.assertEqual(self.run_setup('--client','both').returncode, 0)
+        self.save('claude', fail_update=True)
+        result = self.run_setup('--update')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('codex: updated', result.stdout)
+        self.assertEqual(json.loads((self.base / 'claude.json').read_text())['plugins'][0]['version'], '0.1.5')
+
+    def test_update_checks_native_report_against_readback(self):
+        self.assertEqual(self.run_setup('--client','codex').returncode, 0)
+        self.save('codex', no_update=True)
+        result = self.run_setup('--update', '--client', 'codex')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('version', result.stderr)
 
     def test_both_clients_use_native_installation_and_second_run_skips(self):
         first = self.run_setup('--client', 'both')

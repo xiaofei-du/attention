@@ -103,10 +103,42 @@ def choose_client():
     return {'1': 'codex', '2': 'claude', '3': 'both'}[choice]
 
 
+def update_client(client, executable, installed, cwd, dry_run):
+    if installed.get('enabled') is not True:
+        # Codex plugin add re-enables disabled plugins. Do not change that choice.
+        print(f'{client}: disabled plugin skipped; enable it in your client before updating.')
+        return
+    if dry_run:
+        print(f'Would update {PLUGIN} for {client}, preserving its registration and settings.')
+        return
+    print(f'{client}: refreshing the marketplace and updating Attention…', flush=True)
+    command(executable, ['plugin', 'marketplace', 'upgrade' if client == 'codex' else 'update',
+                         MARKETPLACE], cwd)
+    _, current = inspect_client(client, executable, cwd)
+    if not current or current.get('enabled') is not True:
+        raise SetupError(f'{client}: plugin state changed during refresh. No plugin update was attempted.')
+    args = (['plugin', 'add', PLUGIN, '--json'] if client == 'codex' else
+            ['plugin', 'update', PLUGIN, '--scope', 'user', '--json'])
+    try:
+        report = json.loads(command(executable, args, cwd))
+        version = report.get('version' if client == 'codex' else 'newVersion')
+        if report.get('pluginId') != PLUGIN or not isinstance(version, str) or not version:
+            raise ValueError('Missing version or plugin identity')
+        if client == 'claude' and report.get('outcome') != 'ok':
+            raise ValueError('Update did not report success')
+    except (ValueError, AttributeError) as error:
+        raise SetupError(f'{client}: unrecognized update result. Check its installed version in the client.') from error
+    _, registered = inspect_client(client, executable, cwd)
+    if not registered or registered.get('version') != version or registered.get('enabled') is not True:
+        raise SetupError(f'{client}: installed version/state does not match the update result. Check the client.')
+    print(f'{client}: updated {installed.get("version", "unknown")} → {version}; one plugin registration.')
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--client', choices=('codex', 'claude', 'both'))
     parser.add_argument('--dry-run', action='store_true', help='Inspect and preview without installing plugins')
+    parser.add_argument('--update', action='store_true', help='Update existing enabled plugins; never install into another client')
     args = parser.parse_args(argv)
     if sys.platform != 'darwin' or os.geteuid() == 0 or os.geteuid() != os.getuid():
         raise SetupError('Run Attention setup as your normal user on macOS 14.2+, without sudo.')
@@ -114,11 +146,14 @@ def main(argv=None):
     os.environ['PATH'] = os.pathsep.join(p for p in os.environ.get('PATH', '').split(os.pathsep)
                                        if os.path.isabs(p))
     print('Attention! 📣\nInstall from xiaofei-du/attention using your native plugin managers.', flush=True)
-    selected = args.client or choose_client()
+    selected = args.client or ('available' if args.update else choose_client())
     if selected is None:
         print('Cancelled. No plugins were changed.')
         return 0
-    clients = ('codex', 'claude') if selected == 'both' else (selected,)
+    clients = (tuple(name for name in ('codex', 'claude') if shutil.which(name)) if selected == 'available'
+               else ('codex', 'claude') if selected == 'both' else (selected,))
+    if not clients:
+        raise SetupError('No Codex or Claude Code terminal command was found.')
     executables = {}
     # Preflight every requested client before modifying either one.
     for client in clients:
@@ -133,6 +168,12 @@ def main(argv=None):
         for client in clients:
             executable = executables[client]
             has_market, installed = states[client]
+            if args.update:
+                if installed:
+                    update_client(client, executable, installed, cwd, args.dry_run)
+                else:
+                    print(f'{client}: Attention is not installed; skipped. Use attention setup to add it.')
+                continue
             if installed:
                 state = 'disabled' if installed.get('enabled') is False else 'installed'
                 print(f'{client}: already {state} (version {installed.get("version", "unknown")}); preserved.')

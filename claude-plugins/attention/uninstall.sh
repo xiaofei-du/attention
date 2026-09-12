@@ -7,8 +7,8 @@ main() (
     if [[ $EUID -eq 0 || $EUID -ne $UID ]]; then
         printf '%s\n' 'Do not run Attention uninstall with sudo/root or elevated privileges.' >&2; exit 1
     fi
-    readonly expected_sha256='afed805ffa17bdcdadc4bfe3c439d0a30e7d024763a5b331db76aaae14c36430'
-    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/2ad7cfecb57839f1e15516e9308a4255049a3d32'
+    readonly expected_sha256='0a500420c6c78ab25be46b42478c32b21e466057ffabfc13d8f9afcae2f3d807'
+    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/edb3a90835d06f77ebca42002aca33c01aa0b5b2'
     local offline=false scratch='' candidate source_dir='' helper='' interpreter='' executable digest
     local data_root="${ATTENTION_DATA_DIR:-$HOME/Library/Application Support/Attention}"
     local -a arguments=() candidates=()

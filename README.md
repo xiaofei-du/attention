@@ -56,13 +56,22 @@ If you find Attention useful or have an idea for what to add, give me a shout:
 
 ## Install
 
-**Alpha:** install directly from [xiaofei-du/attention](https://github.com/xiaofei-du/attention).
-The plugin manager downloads the package from GitHub; no ZIP download, local
-marketplace folder, or compilation is needed.
+**Alpha · macOS 14.2+ · Codex and/or Claude Code.** With Homebrew installed:
 
-Prefer a guided install? The [terminal setup wizard](docs/setup.md) checks
-dependencies and installs for Codex, Claude Code, or both. Existing settings and
-disabled plugins stay as you left them. The manual steps below remain available.
+```sh
+brew install xiaofei-du/tap/attention
+attention setup
+```
+
+Choose Codex, Claude Code, or both, then reopen your client and review Attention's
+hooks. Homebrew prepares `uv`; the wizard installs through your native plugin
+managers. Existing settings and disabled plugins stay as you left them.
+
+No Homebrew? Use the [terminal setup wizard](docs/setup.md#without-homebrew) or the
+manual steps below. No ZIP download, local marketplace folder, or compilation is
+needed. After installation, use `attention update` to update your existing enabled
+plugins, and `attention uninstall` for complete removal. See the
+[Homebrew command guide](docs/homebrew.md) for details.
 
 ### Requirements
 
@@ -191,9 +200,25 @@ for controls, summary preferences, and privacy details.
 
 ## Uninstall
 
-Finish your active tasks, quit Codex and Claude Code, then run this in a separate
-Terminal. Paste this block once; it downloads a fixed version and checks its
-SHA-256 **before running it**:
+Finish your active tasks and quit Codex and Claude Code. If you installed through
+Homebrew, run this in a separate Terminal:
+
+```sh
+attention uninstall
+```
+
+It previews the cleanup, asks you to type **yes**, removes Attention from both
+clients and erases its data, then removes the Homebrew command. Cancelling or a
+cleanup failure keeps the command available for retry. Shared `uv`/Python and the
+publisher tap remain. `brew uninstall attention` alone removes only the command;
+it leaves the plugins and speech settings intact. Custom-profile cleanup also
+keeps the command; see [Homebrew removal](docs/homebrew.md#uninstall).
+
+<details>
+<summary>Installed without Homebrew, or already removed the command?</summary>
+
+Paste this block once; it downloads a fixed version and checks its SHA-256
+**before running it**:
 
 <!-- attention-uninstall:start -->
 ```sh
@@ -203,9 +228,9 @@ SHA-256 **before running it**:
   trap '/bin/rm -f -- "$entry"' EXIT
   /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
     -H 'Accept: application/vnd.github.raw+json' \
-    https://api.github.com/repos/xiaofei-du/attention/git/blobs/b4963b0b4389aeeb145327799bf9b89774cd0ade -o "$entry"
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/5fae362726a1f27e83d731c22572f2fcbf17fcfc -o "$entry"
   digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
-  [ "${digest%% *}" = 'a551ea2f3bb6f48cd2e15aa0320577e021c41ead9fef9d7d08bb96c21fcaaaab' ] || {
+  [ "${digest%% *}" = '5f55fb75227bb6162a5a869e6054f8486ffb67c4c1ad89a438c7e273fe3a3859' ] || {
     printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
   }
   /bin/bash -p "$entry"
@@ -216,6 +241,8 @@ SHA-256 **before running it**:
 The launcher finds an existing Python and a verified local uninstall helper, or
 fetches the matching helper by its immutable Git object ID from GitHub. It shows the cleanup paths and asks you
 to type **yes** before removing Attention from **both clients**.
+
+</details>
 
 This permanently deletes Attention's settings, imported audio copies, summaries,
 queue, logs, private dependency environments and retained runtimes. Your original

@@ -5,6 +5,18 @@ Public installs use the GitHub repository `xiaofei-du/attention` and plugin
 Finish active tasks before updating, then reload your client and review changed
 hooks when requested.
 
+## Homebrew users
+
+Run `attention update` to refresh the marketplace and update Attention in your
+available clients. It updates existing enabled plugins only; disabled plugins and
+clients without Attention are skipped. Finish active tasks first, then reload
+clients and review changed hooks. Settings and mute choices remain intact.
+
+Use `attention update --dry-run` to preview, or `--client codex` / `--client claude`
+to select a client. Running `attention setup` again is safe and skips existing
+plugins. Homebrew can update the management command itself with
+`brew upgrade xiaofei-du/tap/attention`; it does not install a second plugin.
+
 ## Update from GitHub
 
 Codex:

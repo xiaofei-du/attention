@@ -194,9 +194,9 @@ SHA-256 **before running it**:
   trap '/bin/rm -f -- "$entry"' EXIT
   /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
     -H 'Accept: application/vnd.github.raw+json' \
-    https://api.github.com/repos/xiaofei-du/attention/git/blobs/b4963b0b4389aeeb145327799bf9b89774cd0ade -o "$entry"
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/5fae362726a1f27e83d731c22572f2fcbf17fcfc -o "$entry"
   digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
-  [ "${digest%% *}" = 'a551ea2f3bb6f48cd2e15aa0320577e021c41ead9fef9d7d08bb96c21fcaaaab' ] || {
+  [ "${digest%% *}" = '5f55fb75227bb6162a5a869e6054f8486ffb67c4c1ad89a438c7e273fe3a3859' ] || {
     printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
   }
   /bin/bash -p "$entry"
