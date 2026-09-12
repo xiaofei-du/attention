@@ -167,7 +167,7 @@ not actions performed during installation.
 
 | What you want | Example request |
 | --- | --- |
-| A text opening | “Set my opening to hello beautiful.” |
+| A text opening | “Set my opening to Hey, boss!” |
 | An Apple alert sound | “Show the available Apple starter sounds.” Then choose one. |
 | Your own audio | “Use this file as my starter.” Provide a local audio file. |
 | No opening | “Remove the opening.” |
