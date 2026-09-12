@@ -59,19 +59,19 @@ as a required merge check is a separate repository setting.
 ## Verification
 
 The **macOS tests** workflow runs on every pull request and push to `main`, and
-can also be started manually. It tests macOS 15 on Apple Silicon with uv-managed
+can also be started manually. It tests macOS 15 on Apple Silicon and Intel with uv-managed
 Python 3.12 and Xcode 26.3, builds both client packages, verifies their payload
 integrity, and runs the suite including checked-in package consistency checks.
-Dependencies are installed from `uv.lock`; the workflow fails if the lockfile
-needs updating.
+Dependencies use hash-verified wheels only, including the bundled Intel wheel.
+The workflow rejects a stale lockfile, exported hashes, or packaged sources.
+Integration tests exercise the freshly built plugins; distribution tests also
+check the copies published in the repository.
 
-An initial Intel runner exposed an installation blocker: the locked
-`cryptography` dependency [no longer provides Intel Mac wheels](https://cryptography.io/en/stable/changelog/#v49-0-0).
-Native binaries
-still build for both architectures, but Intel installation is not currently
-supported and is outside this CI job. Restore Intel runtime coverage when that
-dependency issue is resolved; do not downgrade to a vulnerable dependency to make
-the job pass.
+The **Build Intel dependency** workflow builds a static `cryptography` wheel from
+pinned sources when its recipe changes, and can also be started manually. It
+uploads a review artifact and provenance without publishing a release. See
+[the Intel dependency guide](docs/intel-dependency.md) for source pins, native
+linkage checks, and updating the bundled wheel.
 
 The two real Codex sandbox probes remain opt-in. CI does not test audible
 playback or system-audio permission prompts. Required merge checks are configured

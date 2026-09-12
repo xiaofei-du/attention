@@ -21,10 +21,10 @@ marketplace folder, or compilation is needed.
 
 ### Requirements
 
-- **macOS 14.2 or later on Apple Silicon.** Intel native binaries are included,
-  but installation is currently blocked by a Python dependency without an Intel
-  Mac wheel. Actual speaker playback has been tested on Apple Silicon; other
-  audio devices still need testing. Windows and Linux playback are not supported.
+- **macOS 14.2 or later on Apple Silicon or Intel.** CI tests installation and
+  hooks on both architectures using macOS 15. Actual speaker playback has been
+  tested on Apple Silicon; Intel speakers and other audio devices still need
+  testing. Windows and Linux playback are not supported.
 - **Codex or Claude Code**, with its `codex` or `claude` command available in
   Terminal. Native session controls have been tested with Codex CLI 0.154.0 and
   Claude Code 2.1.268; older clients may need an update.
@@ -219,7 +219,9 @@ generated versions. The distribution tests catch stale runtime copies.
 For development tests, return to the repository root:
 
 ```sh
-uv sync --frozen --python 3.12
+uv lock --check
+uv venv --managed-python --python 3.12 .venv
+uv pip sync --python .venv/bin/python --require-hashes --only-binary :all: --find-links packaging/wheels --index-url https://pypi.org/simple packaging/requirements.txt
 ATTENTION_TEST_MARKETPLACE="$PWD" .venv/bin/python -m unittest discover -s tests -v
 ```
 

@@ -6,8 +6,8 @@ Local spoken notifications for Codex and Claude Code. Short replies can be read 
 
 ## Requirements
 
-- macOS 14.2+ on Apple Silicon. Intel native binaries are included, but installation is currently blocked because a required Python dependency has no Intel Mac wheel. Real speaker playback has been verified on the developer's Apple Silicon MacBook Pro; wider audio-device testing remains open.
-- `uv` available on the client process PATH. Install it once from https://docs.astral.sh/uv/getting-started/installation/ (Homebrew: `brew install uv`). The first launch downloads Python 3.12 and pinned MCP dependencies; SDK wheels are installed with mandatory SHA-256 verification into a private environment, reused on later launches without re-resolving dependencies. Source builds are disabled and the index is fixed to PyPI. Xcode is not required on recipient computers.
+- macOS 14.2+ on Apple Silicon or Intel. CI tests installation and hooks on both architectures using macOS 15. Real speaker playback has been verified on the developer's Apple Silicon MacBook Pro; physical Intel speaker and wider audio-device testing remain open.
+- `uv` available on the client process PATH. Install it once from https://docs.astral.sh/uv/getting-started/installation/ (Homebrew: `brew install uv`). The first launch downloads Python 3.12 and pinned MCP dependencies; SDK wheels are installed with mandatory SHA-256 verification into a private environment, reused on later launches without re-resolving dependencies. Source builds are disabled. Dependencies come from PyPI or the bundled, statically linked Intel cryptography wheel; both require pinned hashes. Xcode is not required on recipient computers.
 - Codex with lifecycle hooks, or Claude Code 2.1.196+.
 - Review/trust the plugin hooks in your client. Ordinary playback needs no system-audio recording permission. Lowering other media is optional and off on new installs. Explicitly enable it before granting macOS system-audio permission. No microphone, media saving or uploading.
 

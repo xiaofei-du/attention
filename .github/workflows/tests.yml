@@ -15,15 +15,19 @@ concurrency:
 
 jobs:
   test:
-    name: Tests (Apple Silicon)
-    runs-on: macos-15
+    name: Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
       # Compile the guarded macOS 26 APIs while still running tests on macOS 15.
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
       # uv run puts this environment's Python on PATH for CLI subprocesses too.
       ATTENTION_PYTHON: python3
-      ATTENTION_TEST_MARKETPLACE: ${{ github.workspace }}
+      ATTENTION_TEST_MARKETPLACE: ${{ github.workspace }}/.build/ci-marketplace
       NKC_RUN_CODEX_SANDBOX_PROBE: "0"
     steps:
       - name: Check out the code
@@ -41,7 +45,13 @@ jobs:
             packaging/requirements.txt
 
       - name: Install locked Python dependencies
-        run: uv sync --locked --managed-python --python 3.12
+        run: |
+          uv lock --check
+          uv venv --managed-python --python 3.12 .venv
+          uv pip sync --python .venv/bin/python --require-hashes --only-binary :all: --find-links packaging/wheels --index-url https://pypi.org/simple packaging/requirements.txt
+
+      - name: Verify the bundled Intel dependency
+        run: .venv/bin/python scripts/verify_intel_wheel.py packaging/wheels/*.whl
 
       - name: Show the native toolchain
         run: |
