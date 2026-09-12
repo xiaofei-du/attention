@@ -194,8 +194,9 @@ for controls, summary preferences, and privacy details.
   installation preserves previous mute choices.
 - **`uv` not found or MCP startup timed out:** confirm `uv --version` works and
   the coding app can find it. Reload after dependency setup completes.
-- **A voice is missing:** follow the download notice, then ask Attention to list
-  voices again. Voice selection does not automatically download or preview audio.
+- **A voice is missing:** [download an Apple speech voice](#download-apple-speech-voices),
+  then ask Attention to list voices again. Voice selection does not automatically
+  download or preview audio.
 - **Other media stays loud:** ask to enable media lowering and follow the system
   permission prompt. Bluetooth and multi-output setups have not been validated.
 - **Updating an existing install:** finish active tasks first, then follow
@@ -204,6 +205,24 @@ for controls, summary preferences, and privacy details.
 - **Moving from the old no-keyboard-code prototype:** follow
   [the migration notes](docs/installation.md#existing-no-keyboard-code-users)
   before removing old hooks, to preserve settings and avoid duplicate notifications.
+
+### Download Apple speech voices
+
+1. Open **System Settings → Accessibility → Read & Speak**. On macOS Sonoma 14
+   and Sequoia 15, this is called **Spoken Content**.
+2. Open the **ⓘ** button next to **System voice**. On Sonoma, use
+   **System voice → Manage Voices** instead.
+3. Choose a language, then a voice to download. In Sonoma, click its download
+   button. Keep your Mac connected to the internet and wait for the download to
+   finish; the voice is unavailable until then. See
+   [Apple's voice guide](https://support.apple.com/guide/mac-help/mchlp2290/mac)
+   for your macOS version.
+4. Back in your agent, ask **“Show installed voices.”** Attention refreshes its
+   voice list. To use one, ask **“Use [voice name] as my voice”**, using a name
+   from that list, then repeat the [notification test](#enable-and-try-it).
+
+Available languages and voices depend on Apple. Downloading a voice does not
+change your saved Attention voice preferences.
 
 ## Uninstall
 
