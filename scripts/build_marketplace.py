@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import plistlib
+import re
 import shlex
 import shutil
 import subprocess
@@ -15,7 +16,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = '0.1.4'
+VERSION = '0.1.5'
 MARKETPLACE_NAME = 'xiaofei-du'
 
 
@@ -64,10 +65,15 @@ def build_native(target):
 
 
 def build_payload(directory):
+    digest = hashlib.sha256((ROOT / 'scripts/uninstall.py').read_bytes()).hexdigest()
+    pinned = re.search(r"expected_sha256='([0-9a-f]{64})'", (ROOT / 'uninstall.sh').read_text())
+    if not pinned or pinned[1] != digest:
+        raise ValueError('uninstall.sh SHA-256 must match scripts/uninstall.py before packaging')
+    run([sys.executable, str(ROOT / 'scripts/update_uninstall_command.py'), '--check'])
     run([sys.executable, str(ROOT / 'scripts/export_requirements.py'), '--check'])
     directory.mkdir(parents=True)
     for name in ['launch.py', 'attention.py', 'run.py', 'mcp_server.py', 'submit.py',
-                 'summary-prompt.txt', 'summary-isolated-prompt.txt']:
+                 'summary-prompt.txt', 'summary-isolated-prompt.txt', 'uninstall.sh']:
         shutil.copy2(ROOT / name, directory / name)
     shutil.copytree(ROOT / 'nkc', directory / 'nkc', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     shutil.copytree(ROOT / 'skills', directory / 'skills', ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))

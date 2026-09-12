@@ -187,48 +187,89 @@ for controls, summary preferences, and privacy details.
 
 ## Uninstall
 
-To remove Attention completely from **both Codex and Claude Code**, finish your
-active tasks and quit both clients. Run this in a separate Terminal:
+Finish your active tasks, quit Codex and Claude Code, then run this in a separate
+Terminal. Paste this block once; it downloads a fixed version and checks its
+SHA-256 **before running it**:
+
+<!-- attention-uninstall:start -->
+```sh
+(
+  set -eu
+  entry="$(/usr/bin/mktemp "${TMPDIR:-/tmp}/attention-uninstall.XXXXXXXX")"
+  trap '/bin/rm -f -- "$entry"' EXIT
+  /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
+    -H 'Accept: application/vnd.github.raw+json' \
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/b4963b0b4389aeeb145327799bf9b89774cd0ade -o "$entry"
+  digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
+  [ "${digest%% *}" = 'a551ea2f3bb6f48cd2e15aa0320577e021c41ead9fef9d7d08bb96c21fcaaaab' ] || {
+    printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
+  }
+  /bin/bash -p "$entry"
+)
+```
+<!-- attention-uninstall:end -->
+
+The launcher finds an existing Python and a verified local uninstall helper, or
+fetches the matching helper by its immutable Git object ID from GitHub. It shows the cleanup paths and asks you
+to type **yes** before removing Attention from **both clients**.
+
+This permanently deletes Attention's settings, imported audio copies, summaries,
+queue, logs, private dependency environments and retained runtimes. Your original
+audio files, other plugins, projects, macOS voices and shared Python/uv installations
+are preserved. A marketplace shared with other plugins is kept and reported. Unknown nested files,
+modified packaged files and unsafe directory ownership stop cleanup before native
+uninstall commands run. Move a reported personal file outside Attention and retry;
+there is no force-delete option. Never run this command with sudo.
+
+<details>
+<summary>Preview, offline removal, custom profiles and single-client uninstall</summary>
+
+Every plugin package includes `uninstall.sh`. From a source checkout or a plugin
+package directory, preview without deleting anything:
 
 ```sh
-uv run --no-config --no-project --isolated --python 3.12 https://raw.githubusercontent.com/xiaofei-du/attention/main/scripts/uninstall.py --yes
+bash -p uninstall.sh --dry-run --offline
 ```
 
-This permanently deletes Attention's settings, imported starter audio, summaries,
-queue, logs, dependency environments and retained runtimes. It also removes both
-client registrations, Attention plugin caches and the dedicated marketplace cache.
-Your original audio files outside Attention, other plugins, project source files,
-macOS voices and shared uv/Python installations are preserved. A marketplace used
-by other plugins is retained and reported.
+Run `bash -p uninstall.sh --offline` to preview and confirm locally. There is no
+version number in the command. If you saved the script elsewhere, it also checks
+the usual Codex/Claude plugin caches and Attention's retained runtimes for a
+matching helper. `--offline` refuses to download anything. An older launcher must
+use its matching helper; a checksum mismatch stops it before any helper executes.
 
-Replace `--yes` with `--dry-run` to preview the exact paths and native commands
-without changing anything. The standalone script works even if you already ran a
-native uninstall. From a source checkout, the equivalent command is
-`uv run --no-config --no-project --isolated --python 3.12 scripts/uninstall.py --yes`.
-It needs the relevant client CLI while that client still has Attention installed.
+The launcher uses an existing **Python 3.11+** (including a suitable Conda Python),
+or asks uv to locate an already-installed Python 3.12. It does not install Python,
+SDK dependencies or sound libraries. If neither is available, restore the Python
+used by Attention and retry. Only use a launcher from a source you trust; its
+SHA-256 check detects changed/mismatched helpers, not a compromised publisher.
+The online command separately checks the outer launcher against the hash in this
+README. You still need to trust these instructions and your local executables;
+this is not a publisher signature. The fixed Git object IDs never follow changes
+to `main`; GitHub API rate limits or a missing object stop the download safely.
 
-The script is also bundled locally, so removal does not depend on GitHub being
-reachable. For a default Codex installation of this release:
+Our cleanup uses an exact file inventory and does not recursively erase new files
+added during deletion. Native client commands manage their own caches; the
+uninstaller rechecks before calling them but cannot sandbox those commands or a
+compromised process running as your user. Keep both clients closed during removal.
 
-```sh
-uv run --no-config --no-project --isolated --python 3.12 "$HOME/.codex/plugins/cache/xiaofei-du/attention/0.1.4/scripts/uninstall.py" --yes
-```
+Use `--yes` only when you explicitly want to skip confirmation; piped text such
+as `echo yes` does not answer the default terminal prompt. The standalone Python
+entry remains available as `python3 -I scripts/uninstall.py --dry-run` or `--yes`.
+Run `bash uninstall.sh --help` for the launcher options.
 
-For Claude Code, use `.claude` instead of `.codex` in that path. Adjust the profile
-path if you use a custom home. The running script can remove its own plugin cache.
-If an HTTPS download fails certificate validation, use this local copy or the
-source-checkout command above; do not disable TLS verification.
-
-Active MCP/hook sessions block deletion: quit those clients and retry. Detached
-playback workers receive the global-off signal and must exit before files are
-erased. A failed native removal or a remaining registration returns an error and
-preserves shared data; retrying the command is safe. Use the same `CODEX_HOME`,
-`CLAUDE_CONFIG_DIR` and `ATTENTION_DATA_DIR` overrides as your installation, if any.
+Use the same `CODEX_HOME`, `CLAUDE_CONFIG_DIR` and `ATTENTION_DATA_DIR` overrides as
+your installation. `--data-dir PATH` also selects a custom Attention data root.
 Other custom profiles must be uninstalled separately before erasing shared data.
 Legacy no-keyboard-code hooks require migration/removal first.
 
-To remove Attention from **only one client** and keep the other client, settings
-and imported audio, use that client's native command instead:
+Active MCP/hook sessions block deletion. Detached playback workers receive the
+global-off signal and must exit before files are erased. A failed client removal,
+remaining registration or changed cleanup scope stops the operation; fix the
+reported problem and retry. The relevant client CLI must remain available while
+that client still has Attention installed. If a download fails certificate
+validation, use the local copy; do not disable TLS verification.
+
+To remove Attention from **only one client**, keeping shared settings and audio:
 
 ```sh
 codex plugin remove attention@xiaofei-du
@@ -237,10 +278,11 @@ claude plugin uninstall attention@xiaofei-du
 ```
 
 Restart that client afterward. These single-client commands preserve shared data
-and do not stop a worker already playing. The complete-uninstall command above is
-the option that stops playback and erases Attention's data. Client conversation
-history, operating-system permission records and backups are owned by their hosts
-and are outside this cleanup command.
+and do not stop a worker already playing. Client conversation history, operating-system
+permission records and backups are owned by their hosts and are outside Attention's
+cleanup command.
+
+</details>
 
 ## Contributing
 

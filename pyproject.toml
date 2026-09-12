@@ -1,6 +1,6 @@
 [project]
 name = "no-keyboard-code"
-version = "0.1.4"
+version = "0.1.5"
 description = "Local spoken notification controls for Codex and Claude Code"
 requires-python = ">=3.11,<3.13"
 dependencies = ["mcp>=1.28,<2"]
