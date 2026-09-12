@@ -97,7 +97,7 @@ cannot bind an old call to a newer session turn. Argument values are never store
 
 New installs use exactly `hey sunshine`. Existing text, audio or empty openings persist. Speech and new sessions default on; announcing the session name and lowering other media default off. Ask your agent to change the opening or voices, mute this session, turn all speech off, or clear pending notifications. Nine MCP controls are exposed; summaries remain an original-session hook/CLI workflow. The optional “Session: name” announcement uses the normal voice preferences: auto detection or the user's fixed voice, with no English requirement. It is routed separately from the opening/body; adjacent matching voices are synthesized together. Unavailable optional speech is skipped with a download notice, while speakable body content continues. With no usable voices, speech is skipped and a download notice is shown; coding tasks continue and saved preferences are preserved. Voice inventory is shared across sessions/workers. Prompt hooks refresh it silently in the background when it is more than five minutes old; playback can reuse a validated snapshot while speech-asset fingerprints remain unchanged, without waiting for that refresh. Observed asset changes and explicit voice listing/preferences changes trigger fresh lookup. Undocumented Apple asset layouts may require explicit refresh or the next prompt warmup. First use with no usable cache can still wait for macOS enumeration. There is no fixed queue delay; up to two silent synthesis jobs run concurrently and the assembled notification plays in its original order through one player.
 
-Settings, queue, imported audio and versioned runtimes are under `~/Library/Application Support/Attention/`. Both providers share this location. Plugin updates do not reset settings. Old versioned runtimes are retained. Hooks loaded from version 0.1.1 can use their pinned retained runtime after plugin-cache removal; older loaded hook commands need a client reload as described above. Uninstalling a client plugin does not erase this shared data or disable the other client. Turn global speech off before uninstalling if you want current and queued speech stopped.
+Settings, queue, imported audio and versioned runtimes are under `~/Library/Application Support/Attention/`. Both providers share this location. Plugin updates preserve this data. Native single-client uninstall preserves it too; use the complete-uninstall command below to erase it.
 
 Unsupported platforms/old macOS return a one-time warning and skip notifications before loading Apple audio modules or creating a queue. MCP tools report unsupported-platform status. The launcher still requires uv; an OS check cannot run when its launcher dependency is missing.
 
@@ -130,3 +130,60 @@ Dependency and payload hashes detect mismatches; they are not publisher authenti
 For “more about what I need to decide”, use `{"focus":"next_steps"}`. Focus changes emphasis while preserving relevant context, actual progress, and the next action. The original agent still chooses direct speech versus summary. Free-form `custom_instructions` is retired and cleared on upgrade; it is not interpreted or automatically converted into a new preference. Old connected clients may still display an empty legacy field but cannot write nonempty free text. Reload the client for the new MCP schema, or use the existing `set-summary-preferences` CLI with the new fields.
 
 Automatic hooks include only a fixed opening type, not the saved opening text, sound name, or imported file path. The player keeps using the exact saved opening; explicit `get_status` calls can still read its details on demand. These controls reduce automatic exposure to untrusted text; they do not sandbox a coding agent with unrestricted shell or prevent all prompt injection. No extra LLM or security-classifier API is introduced.
+
+## Uninstall
+
+To remove Attention completely from **both Codex and Claude Code**, finish your
+active tasks and quit both clients. Run this in a separate Terminal:
+
+```sh
+uv run --no-config --no-project --isolated --python 3.12 https://raw.githubusercontent.com/xiaofei-du/attention/main/scripts/uninstall.py --yes
+```
+
+This permanently deletes Attention's settings, imported starter audio, summaries,
+queue, logs, dependency environments and retained runtimes. It also removes both
+client registrations, Attention plugin caches and the dedicated marketplace cache.
+Your original audio files outside Attention, other plugins, project source files,
+macOS voices and shared uv/Python installations are preserved. A marketplace used
+by other plugins is retained and reported.
+
+Replace `--yes` with `--dry-run` to preview the exact paths and native commands
+without changing anything. The standalone script works even if you already ran a
+native uninstall. From a source checkout, the equivalent command is
+`uv run --no-config --no-project --isolated --python 3.12 scripts/uninstall.py --yes`.
+It needs the relevant client CLI while that client still has Attention installed.
+
+The script is also bundled locally, so removal does not depend on GitHub being
+reachable. For a default Codex installation of this release:
+
+```sh
+uv run --no-config --no-project --isolated --python 3.12 "$HOME/.codex/plugins/cache/xiaofei-du/attention/0.1.3/scripts/uninstall.py" --yes
+```
+
+For Claude Code, use `.claude` instead of `.codex` in that path. Adjust the profile
+path if you use a custom home. The running script can remove its own plugin cache.
+If an HTTPS download fails certificate validation, use this local copy or the
+source-checkout command above; do not disable TLS verification.
+
+Active MCP/hook sessions block deletion: quit those clients and retry. Detached
+playback workers receive the global-off signal and must exit before files are
+erased. A failed native removal or a remaining registration returns an error and
+preserves shared data; retrying the command is safe. Use the same `CODEX_HOME`,
+`CLAUDE_CONFIG_DIR` and `ATTENTION_DATA_DIR` overrides as your installation, if any.
+Other custom profiles must be uninstalled separately before erasing shared data.
+Legacy no-keyboard-code hooks require migration/removal first.
+
+To remove Attention from **only one client** and keep the other client, settings
+and imported audio, use that client's native command instead:
+
+```sh
+codex plugin remove attention@xiaofei-du
+# or
+claude plugin uninstall attention@xiaofei-du
+```
+
+Restart that client afterward. These single-client commands preserve shared data
+and do not stop a worker already playing. The complete-uninstall command above is
+the option that stops playback and erases Attention's data. Client conversation
+history, operating-system permission records and backups are owned by their hosts
+and are outside this cleanup command.

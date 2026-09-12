@@ -15,6 +15,11 @@ WELCOME = 'Attention first-use introduction'
 
 class OnboardingTests(unittest.TestCase):
     def setUp(self):
+        # Installed plugins provide a compact launcher. A source checkout's
+        # absolute path must not consume this fixture's inline-context budget.
+        launcher = patch.dict('os.environ', {'ATTENTION_COMMAND': '/tmp/attention-test/attention'})
+        launcher.start()
+        self.addCleanup(launcher.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / 'state'
