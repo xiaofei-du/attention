@@ -1,6 +1,27 @@
 # Attention! 📣
 
 <p align="center">
+  <a href="https://github.com/xiaofei-du/attention/actions/workflows/tests.yml">
+    <img src="https://github.com/xiaofei-du/attention/actions/workflows/tests.yml/badge.svg?branch=main&amp;event=push" alt="macOS tests on main">
+  </a>
+  <a href="#requirements">
+    <img src="https://img.shields.io/badge/macOS-14.2%2B-007AFF" alt="macOS 14.2 or later">
+  </a>
+  <a href="#add-the-plugin">
+    <img src="https://img.shields.io/badge/Codex-plugin-17876D" alt="Codex plugin">
+  </a>
+  <a href="#add-the-plugin">
+    <img src="https://img.shields.io/badge/Claude_Code-plugin-D97757" alt="Claude Code plugin">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
+  </a>
+  <a href="#install">
+    <img src="https://img.shields.io/badge/status-alpha-E3A008" alt="Alpha release">
+  </a>
+</p>
+
+<p align="center">
   <a href="https://giphy.com/gifs/cbbc-tracy-beaker-cbbc-star-cYaBD8kxE4PZudHBRA">
     <img src="https://media.giphy.com/media/cYaBD8kxE4PZudHBRA/giphy.gif" alt="Attention GIF by CBBC on GIPHY" width="360">
   </a>
