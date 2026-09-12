@@ -35,8 +35,12 @@ agent. Multiple sessions share one playback queue. One at a time, please.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
-If you find Attention useful or have an idea for what to add, give me a shout on
-[X](https://x.com/xiaofeidu283) or [Threads](https://www.threads.com/@smilefei.du).
+## Contact
+
+If you find Attention useful or have an idea for what to add, give me a shout:
+
+[![X: @xiaofeidu283](https://img.shields.io/badge/X-%40xiaofeidu283-000000?style=flat-square&logo=x&logoColor=white&labelColor=000000)](https://x.com/xiaofeidu283)
+[![Threads: @smilefei.du](https://img.shields.io/badge/Threads-%40smilefei.du-000000?style=flat-square&logo=threads&logoColor=white&labelColor=000000)](https://www.threads.com/@smilefei.du)
 
 ## Who is this for?
 
