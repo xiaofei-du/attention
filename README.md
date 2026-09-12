@@ -6,11 +6,11 @@
   </a>
 </p>
 
-Your agent has something to report.
+Your agent would like a word.
 
 Spoken task updates for **Codex and Claude Code on macOS**. When a round finishes,
 Attention reads a short reply or a conversational summary written by that same
-agent. Multiple sessions share one playback queue, so updates take turns.
+agent. Multiple sessions share one playback queue. One at a time, please.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
@@ -18,12 +18,12 @@ service is required.
 
 This is for you if:
 
-- The usual session notification feels a bit boring.
-- You're running several sessions and can't tell which one just finished.
-- You work from home and want a little more fun in your day.
+- Your usual notification has all the personality of a microwave.
+- You're running five sessions and every ping starts a game of “Which one was that?”
+- You work from home and could use a coworker with a mute button.
 
-If it gets too noisy, ask your agent to **“Turn off speech globally.”** Enjoy some
-quiet alone time, then turn it back on whenever you like. See [Make it yours](#make-it-yours)
+If it gets too noisy, ask your agent to **“Turn off speech globally.”** Quiet alone
+time is a feature too. Turn it back on whenever you like; see [Make it yours](#make-it-yours)
 below for the controls.
 
 ## Install
@@ -97,8 +97,9 @@ original notification sound.
 
 ## Make it yours
 
-Change settings by talking to your agent. These requests are examples, not actions
-performed during installation.
+Give your agent an entrance: a friendly greeting, a Mac chime, or a tiny bit of
+drama. Change settings by talking to your agent. These requests are examples,
+not actions performed during installation.
 
 | What you want | Example request |
 | --- | --- |
@@ -123,7 +124,7 @@ upload the file. Your opening stays fixed until you change it.
 **Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
 (MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
 agent and say **“Use this file as my starter.”** This is a custom opening sound;
-the spoken reply or summary follows it.
+the spoken reply or summary follows it. Subtlety is optional.
 
 Global mute stops current speech, clears pending updates, and discards new ones
 while off. Re-enabling preserves individually muted sessions and does not replay
