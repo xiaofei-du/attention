@@ -128,10 +128,10 @@ claude plugin install attention@xiaofei-du
    它还有一个 **PreToolUse** hook，只用来识别 session 控制调用。
 3. 开一个新对话，粘贴：
 
-   > Please reply only with: “This is an Attention voice notification.”
+   > 请只回复：「这是一则 Attention 语音通知。」
 
    使用全新安装的默认值时，你会先听到 **hey sunshine**，接着是
-   **This is an Attention voice notification.** 听到声音才代表播放成功；
+   **这是一则 Attention 语音通知。** 听到声音才代表播放成功；
    只看到文字还不算。既有语音偏好不会被改动。
 4. 输入 **「Attention help」**，查看可调整的设置。
 
