@@ -53,6 +53,9 @@ jobs:
       - name: Verify the bundled Intel dependency
         run: .venv/bin/python scripts/verify_intel_wheel.py packaging/wheels/*.whl
 
+      - name: Verify setup download pins
+        run: .venv/bin/python scripts/update_setup_command.py --check
+
       - name: Show the native toolchain
         run: |
           xcodebuild -version
