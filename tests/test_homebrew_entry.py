@@ -81,7 +81,7 @@ class HomebrewEntryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(self.data.exists())
         self.assertEqual(self.brew_calls.read_text().splitlines(),
-                         ['uninstall', '--formula', 'xiaofei-du/tap/attention'])
+                         ['uninstall', '--formula', '--force', 'xiaofei-du/tap/attention'])
         self.assertEqual(Path(str(self.brew_calls) + '.env').read_text(), '1')
         self.assertEqual((self.base / 'unrelated').read_text(), 'keep me')
         self.assertTrue((self.codex / 'plugins/cache/xiaofei-du/other/file').exists())

@@ -53,7 +53,7 @@ main() (
     python="$("$uv_bin/uv" python find --managed-python --system --no-project --no-config --offline --no-python-downloads 3.12 2>/dev/null || true)"
     if [[ "$python" != /* || ! -x "$python" || ! "${python%/*}/python3" -ef "$python" ]]; then
         printf '%s\n' 'The uv-managed Python used by Attention is unavailable. Restore it before cleanup.' \
-            'If you only installed this command and never ran setup, use brew uninstall xiaofei-du/tap/attention.' >&2
+            'If you only installed this command and never ran setup, use brew uninstall --formula --force xiaofei-du/tap/attention.' >&2
         exit 1
     fi
     export PATH="${python%/*}:$PATH"
@@ -65,7 +65,7 @@ main() (
     if "$custom"; then
         printf '%s\n' 'Custom profile: keeping the shared Homebrew command for other profiles.'
     else
-        printf '%s\n' 'After confirmed cleanup, Homebrew will also remove the Attention command.' \
+        printf '%s\n' 'After confirmed cleanup, Homebrew will also remove all installed Attention command versions.' \
             'Shared uv/Python and the publisher tap will be kept.'
     fi
     if /bin/bash -p "$directory/uninstall.sh" "$@"; then result=0; else result=$?; fi
@@ -73,9 +73,9 @@ main() (
     if (( result == 3 )); then exit 0; fi
     (( result == 0 )) || exit "$result"
     if "$preview" || "$custom"; then exit 0; fi
-    if ! HOMEBREW_NO_AUTOREMOVE=1 HOMEBREW_NO_AUTO_UPDATE=1 "$brew" uninstall --formula xiaofei-du/tap/attention; then
+    if ! HOMEBREW_NO_AUTOREMOVE=1 HOMEBREW_NO_AUTO_UPDATE=1 "$brew" uninstall --formula --force xiaofei-du/tap/attention; then
         printf '%s\n' 'Attention data was cleaned, but Homebrew removal failed.' \
-            'Retry: HOMEBREW_NO_AUTOREMOVE=1 brew uninstall xiaofei-du/tap/attention' >&2
+            'Retry: HOMEBREW_NO_AUTOREMOVE=1 brew uninstall --formula --force xiaofei-du/tap/attention' >&2
         exit 1
     fi
 )

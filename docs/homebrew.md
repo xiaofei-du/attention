@@ -59,7 +59,7 @@ attention uninstall
 ```
 
 This prints the scope, asks you to type `yes`, runs the existing verified cleanup,
-and only after successful cleanup calls Homebrew to remove the command. Cancelling,
+and only after successful cleanup calls Homebrew to remove every installed version of the command. Cancelling,
 a changed cleanup scope or a cleanup error leaves the command installed. If only
 the final Homebrew step fails, it prints a retry command.
 
@@ -71,7 +71,7 @@ attention uninstall --offline
 `--dry-run` changes nothing. The bundled helper supports offline removal using
 the uv-managed Python 3.12 prepared during setup, using the formula's `uv` path.
 It does not execute a project's active virtualenv Python. Uninstall never downloads Python. If you have only installed the command and
-never run setup, you can simply use `brew uninstall xiaofei-du/tap/attention`.
+never run setup, you can simply use `brew uninstall --formula --force xiaofei-du/tap/attention`.
 
 Complete cleanup permanently removes Attention's settings, imported audio copies,
 queue, summaries, logs and private runtimes. Original audio files, other plugins,
@@ -90,5 +90,5 @@ other profiles too. Use the same overrides as installation. After every profile
 is clean, remove the wrapper yourself with:
 
 ```sh
-HOMEBREW_NO_AUTOREMOVE=1 brew uninstall xiaofei-du/tap/attention
+HOMEBREW_NO_AUTOREMOVE=1 brew uninstall --formula --force xiaofei-du/tap/attention
 ```
