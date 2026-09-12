@@ -78,7 +78,7 @@ class GlobalVoiceTests(unittest.TestCase):
         self.store.begin_turn('codex', 'A', 'two')
         self.store.enqueue('codex', 'A', 'two', 'Fresh result.', delay=0)
         run_worker(self.store, play=lambda text, settings, stopped: heard.append(text) or True)
-        self.assertEqual(heard, ['hey sunshine Fresh result.'])
+        self.assertEqual(heard, ['hey boss Fresh result.'])
 
     def test_session_enable_cannot_bypass_global_off_and_preferences_survive(self):
         token = self.store.begin_turn('codex', 'A', 'one')
@@ -113,11 +113,11 @@ class GlobalVoiceTests(unittest.TestCase):
             self.assertTrue(stopped(), 'Re-enable cannot revive a cancelled playback')
             return True  # Even a late success acknowledgement must not resurrect it.
         run_worker(self.store, play=sink)
-        self.assertEqual(heard, ['hey sunshine A.'])
+        self.assertEqual(heard, ['hey boss A.'])
         self.assertEqual([j['status'] for j in self.store.jobs()], ['cancelled', 'cancelled'])
         self.store.enqueue('codex', 'B', 'two', 'Fresh.', delay=0)
         run_worker(self.store, play=lambda text, settings, stopped: heard.append(text) or True)
-        self.assertEqual(heard[-1], 'hey sunshine Fresh.')
+        self.assertEqual(heard[-1], 'hey boss Fresh.')
 
     def test_global_off_clears_backlog_and_on_accepts_only_new_notifications(self):
         self.store.enqueue('codex', 'A', 'one', 'Old.', delay=0)
@@ -127,7 +127,7 @@ class GlobalVoiceTests(unittest.TestCase):
         heard = []
         sink = lambda text, settings, stopped: heard.append(text) or True
         run_worker(self.store, play=sink)
-        self.assertEqual(heard, ['hey sunshine New.'])
+        self.assertEqual(heard, ['hey boss New.'])
 
     def test_hook_controls_remain_available_while_both_global_and_session_are_disabled(self):
         self.store.set_global_enabled(False)
@@ -192,7 +192,7 @@ class GlobalVoiceTests(unittest.TestCase):
         self.assertIsNotNone(self.store.enqueue('claude-code', 'A', 'one', 'Now finished.', delay=0))
         heard = []
         run_worker(self.store, play=lambda text, settings, stopped: heard.append(text) or True)
-        self.assertEqual(heard, ['hey sunshine Now finished.'])
+        self.assertEqual(heard, ['hey boss Now finished.'])
 
 
 if __name__ == '__main__':

@@ -1,16 +1,20 @@
 # Attention! 📣
 
 <p align="center">
+  <strong>English</strong> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.zh-TW.md">繁體中文</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/xiaofei-du/attention/actions/workflows/tests.yml">
     <img src="https://github.com/xiaofei-du/attention/actions/workflows/tests.yml/badge.svg?branch=main&amp;event=push" alt="macOS tests on main">
   </a>
   <a href="#requirements">
     <img src="https://img.shields.io/badge/macOS-14.2%2B-007AFF" alt="macOS 14.2 or later">
   </a>
-  <a href="#add-the-plugin">
+  <a href="#install">
     <img src="https://img.shields.io/badge/Codex-plugin-17876D" alt="Codex plugin">
   </a>
-  <a href="#add-the-plugin">
+  <a href="#install">
     <img src="https://img.shields.io/badge/Claude_Code-plugin-D97757" alt="Claude Code plugin">
   </a>
   <a href="LICENSE">
@@ -39,9 +43,9 @@ service is required.
 
 This is for you if:
 
-- Your usual notification has all the personality of a microwave.
-- You're running five sessions and every ping starts a game of “Which one was that?”
-- You work from home and could use a coworker with a mute button.
+- Your usual notification sounds like a microwave, and you'd like something more personal.
+- You're running five sessions and every ping makes you think, “Wait, which one was that?”
+- You work from home and could use a noisy coworker.
 
 If it gets too noisy, ask your agent to **“Turn off speech globally.”** Quiet alone
 time is a feature too. Turn it back on whenever you like; see [Make it yours](#make-it-yours)
@@ -67,8 +71,8 @@ Choose Codex, Claude Code, or both, then follow [Enable and try it](#enable-and-
 Homebrew prepares `uv`; the wizard installs through your native plugin
 managers. Existing settings and disabled plugins stay as you left them.
 
-No Homebrew? Use the [terminal setup wizard](docs/setup.md#without-homebrew) or the
-manual steps below. No ZIP download, local marketplace folder, or compilation is
+No Homebrew? Use the [terminal setup wizard](docs/setup.md#without-homebrew) or expand
+**Manual installation (optional)** below. No ZIP download, local marketplace folder, or compilation is
 needed. After installation, use `attention update` to update your existing enabled
 plugins, and `attention uninstall` for complete removal. See the
 [Homebrew command guide](docs/homebrew.md) for details.
@@ -82,20 +86,30 @@ plugins, and `attention uninstall` for complete removal. See the
 - **Codex or Claude Code**, with its `codex` or `claude` command available in
   Terminal. Native session controls have been tested with Codex CLI 0.154.0 and
   Claude Code 2.1.268; older clients may need an update.
-- **uv**, available to both Terminal and the coding app. If you use Homebrew:
-
-  ```sh
-  brew install uv
-  ```
-
-  Other installation methods are in the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+- **uv**, available to both Terminal and the coding app. Homebrew installs it
+  automatically with Attention; no separate installation is needed for that route.
 
 The first launch downloads Python 3.12 and pinned MCP dependencies, so it needs
 internet access and can take longer than later launches. Bundle users do not need
 Xcode. Text playback needs an installed system voice; if none is usable, Attention
 skips speech and explains how to download one.
 
-### Add the plugin
+<a id="add-the-plugin"></a>
+<details>
+<summary>Manual installation (optional)</summary>
+
+**Already ran `attention setup` or the terminal setup wizard? Skip this section and
+go to [Enable and try it](#enable-and-try-it).** The wizard has already added the
+marketplace and installed your selected plugins.
+
+Use these steps only if you prefer to install through the native plugin managers
+yourself. First, make sure `uv` is installed. If it is missing and you use Homebrew:
+
+```sh
+brew install uv
+```
+
+Other installation methods are in the [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 Run these commands in Terminal from any directory. If you installed an earlier
 local alpha, first follow [Switch from a local installation](docs/upgrading.md#switch-from-a-local-installation).
@@ -120,6 +134,8 @@ claude plugin install attention@xiaofei-du
 `xiaofei-du/attention` identifies the GitHub repository. `attention@xiaofei-du`
 selects the Attention plugin from that publisher’s marketplace.
 
+</details>
+
 ### Enable and try it
 
 1. Reload the plugin or reopen your client after installation.
@@ -133,7 +149,7 @@ selects the Attention plugin from that publisher’s marketplace.
 
    > Please reply only with: “This is an Attention voice notification.”
 
-   With fresh-install defaults, you should hear **hey sunshine**, followed by
+   With fresh-install defaults, you should hear **hey boss**, followed by
    **This is an Attention voice notification.** Hearing it confirms playback;
    seeing the text alone does not. Existing speech preferences stay unchanged.
 4. Ask **“Attention help”** to see the available settings.
@@ -151,7 +167,7 @@ not actions performed during installation.
 
 | What you want | Example request |
 | --- | --- |
-| A text opening | “Set my opening to hey sunshine.” |
+| A text opening | “Set my opening to Hey, boss!” |
 | An Apple alert sound | “Show the available Apple starter sounds.” Then choose one. |
 | Your own audio | “Use this file as my starter.” Provide a local audio file. |
 | No opening | “Remove the opening.” |

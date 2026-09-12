@@ -75,7 +75,7 @@ class SummaryToggleTests(unittest.TestCase):
         heard = []
         run_worker(self.store, play=lambda text, settings, cancelled: heard.append(text) or True)
         run_worker(self.store, play=lambda *args: self.fail('No replay'))
-        self.assertEqual(heard, ['hey sunshine'] * 4)
+        self.assertEqual(heard, ['hey boss'] * 4)
 
     def test_global_and_session_off_still_win_and_claude_waits_for_background_tasks(self):
         self.store.set_summary_preferences(enabled=False)

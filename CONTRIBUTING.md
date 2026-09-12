@@ -56,6 +56,14 @@ on creation and edits. Commit-message formatting is a contributor convention;
 that check does not inspect every individual Git commit. Configuring this check
 as a required merge check is a separate repository setting.
 
+## README translations
+
+Keep `README.md`, `README.zh-CN.md` (Simplified Chinese), and `README.zh-TW.md`
+(Traditional Chinese) aligned when changing user-facing behavior or instructions.
+Preserve executable commands and setting names, and check translated heading links.
+The translated READMEs link to the English README's generated, hash-verified online
+uninstall command so its version and checksum have only one source to update.
+
 ## Verification
 
 The **macOS tests** workflow runs on every pull request and push to `main`, and

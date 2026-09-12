@@ -53,7 +53,7 @@ class PluginMCPTests(unittest.TestCase):
                     async with self.connect(spec['command'], args, env,
                                             str(plugin / spec['cwd']) if 'cwd' in spec else None) as client:
                         status = await self.call(client, 'get_status')
-                        expected = 'hey sunshine' if provider == 'codex' else 'Keep my opening'
+                        expected = 'hey boss' if provider == 'codex' else 'Keep my opening'
                         self.assertEqual(status['starter']['opening']['text'], expected)
                         self.assertEqual(status['queue']['pending'], 0)
                         self.assertEqual(status['summary_preferences']['focus'],

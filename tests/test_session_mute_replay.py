@@ -42,7 +42,7 @@ class SessionMuteReplayTests(unittest.TestCase):
                     self.stop(store, provider, turn='two', last_assistant_message='Fresh result.')
                     run_worker(store, play=sink)
                     run_worker(store, play=sink)
-                    self.assertEqual(heard, ['hey sunshine Fresh result.' if summaries else 'hey sunshine'])
+                    self.assertEqual(heard, ['hey boss Fresh result.' if summaries else 'hey boss'])
 
     def test_enqueue_rechecks_session_mute_and_remembers_rejected_completion(self):
         for provider in ('codex', 'claude-code'):
@@ -77,7 +77,7 @@ class SessionMuteReplayTests(unittest.TestCase):
                     self.stop(store, 'claude-code', last_assistant_message='Background work finished.')
                     heard = []
                     run_worker(store, play=lambda text, settings, stopped: heard.append(text) or True)
-                    self.assertEqual(heard, ['hey sunshine Background work finished.' if summaries else 'hey sunshine'])
+                    self.assertEqual(heard, ['hey boss Background work finished.' if summaries else 'hey boss'])
 
     def test_reenable_before_any_completion_keeps_current_turn_eligible(self):
         for provider in ('codex', 'claude-code'):
@@ -89,7 +89,7 @@ class SessionMuteReplayTests(unittest.TestCase):
                 self.stop(store, provider, last_assistant_message='Finished after reenable.')
                 heard = []
                 run_worker(store, play=lambda text, settings, stopped: heard.append(text) or True)
-                self.assertEqual(heard, ['hey sunshine Finished after reenable.'])
+                self.assertEqual(heard, ['hey boss Finished after reenable.'])
 
 
 if __name__ == '__main__':

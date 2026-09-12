@@ -31,7 +31,7 @@ class CliTests(unittest.TestCase):
         prompt = self.command('hook', 'prompt', payload=json.dumps(dict(common, hook_event_name='UserPromptSubmit')))
         context = prompt['hookSpecificOutput']['additionalContext']
         self.assertIn('Opening type: text', context)
-        self.assertNotIn('hey sunshine', context)
+        self.assertNotIn('hey boss', context)
         stop = dict(common, hook_event_name='Stop', last_assistant_message=(PROJECT / 'examples/notification-message.md').read_text())
         for _ in range(2):
             self.assertEqual(self.command('hook', 'stop', payload=json.dumps(stop)), {})
@@ -40,7 +40,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(len(status['jobs']), 1)
         self.assertEqual(status['jobs'][0]['status'], 'pending')
         self.assertEqual(status['settings']['name'], 'sunshine')
-        self.assertEqual(status['settings']['start'], 'hey sunshine')
+        self.assertEqual(status['settings']['start'], 'hey boss')
 
     def test_stop_queues_the_short_visible_reply_without_rewriting_it(self):
         reply = '**改好了**，音量維持原本的設定。'

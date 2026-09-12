@@ -210,7 +210,7 @@ def main(argv=None):
     print('First launch downloads Python/MCP dependencies and can take a little longer.\n'
           'Then start a new conversation and paste:\n'
           '  Please reply only with: “This is an Attention voice notification.”\n'
-          'With fresh-install defaults, listen for “hey sunshine”, then the sentence above.\n'
+          'With fresh-install defaults, listen for “hey boss”, then the sentence above.\n'
           'Hearing it confirms playback; seeing the text alone does not.\n'
           'Existing disabled plugins and speech preferences stay unchanged.')
     return 0

@@ -135,11 +135,13 @@ class StoreTests(unittest.TestCase):
                          global_voice_enabled=True, voice_gender='default', duck_media=True))
 
     def test_custom_start_is_stable_across_turns_restarts_and_other_settings(self):
-        self.store.set_start('Hey teammate!')
-        self.store.begin_turn('codex', 'A', '1')
-        self.store.begin_turn('codex', 'A', '2')
-        self.store.configure(voice='Tingting', rate=200)
-        self.assertEqual(Store(self.root).settings()['start'], 'Hey teammate!')
+        for start in ('hey sunshine', 'Hey teammate!', ''):
+            with self.subTest(start=start):
+                self.store.set_start(start)
+                self.store.begin_turn('codex', 'A', '1')
+                self.store.begin_turn('codex', 'A', '2')
+                self.store.configure(voice='Tingting', rate=200)
+                self.assertEqual(Store(self.root).settings()['start'], start)
 
     def test_invalid_start_never_overwrites_the_saved_opening(self):
         self.store.set_start('早安。')
