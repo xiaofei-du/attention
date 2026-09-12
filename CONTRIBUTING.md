@@ -58,6 +58,16 @@ as a required merge check is a separate repository setting.
 
 ## Verification
 
+The **macOS tests** workflow runs on every pull request and push to `main`, and
+can also be started manually. It tests macOS 15 on Apple Silicon and Intel with
+Python 3.12, builds both client packages, verifies their payload integrity, and
+runs the suite including checked-in package consistency checks. Dependencies are
+installed from `uv.lock`; the workflow fails if the lockfile needs updating.
+
+The two real Codex sandbox probes remain opt-in. CI does not test audible
+playback or system-audio permission prompts. Required merge checks are configured
+separately in repository settings; this workflow does not publish releases.
+
 Use the [development instructions](README.md#build-from-source) for runtime
 tests and rebuilding the published packages. Report the checks you actually ran.
 For documentation-only changes, verify formatting and links. For changes to a

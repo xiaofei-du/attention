@@ -1,0 +1,64 @@
+name: macOS tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      # uv run puts this environment's Python on PATH for CLI subprocesses too.
+      ATTENTION_PYTHON: python3
+      ATTENTION_TEST_MARKETPLACE: ${{ github.workspace }}
+      NKC_RUN_CODEX_SANDBOX_PROBE: "0"
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.10"
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            packaging/requirements.txt
+
+      - name: Install locked Python dependencies
+        run: uv sync --locked --python 3.12
+
+      - name: Build both client packages
+        run: .venv/bin/python scripts/build_marketplace.py --output .build/ci-marketplace
+
+      - name: Verify generated package integrity
+        run: |
+          .venv/bin/python - <<'PY'
+          from pathlib import Path
+          from nkc.payload import payload_manifest
+
+          for folder in ('plugins', 'claude-plugins'):
+              plugin = Path('.build/ci-marketplace') / folder / 'attention'
+              payload_manifest(plugin)
+              print(f'Verified generated {folder} package')
+          PY
+
+      - name: Run tests and checked-in package consistency checks
+        run: uv run --no-sync python -m unittest discover -s tests -v
