@@ -39,7 +39,11 @@ main() (
     fi
     for arg in "$@"; do
         case "$arg" in
-            --help|-h) exec /bin/bash -p "$directory/uninstall.sh" "$@" ;;
+            --help|-h)
+                # Only a standalone help option can bypass interpreter discovery.
+                # In "--data-dir --help", --help is a value, not a help request.
+                if (( $# == 1 )); then exec /bin/bash -p "$directory/uninstall.sh" "$@"; fi
+                preview=true ;;
             --dry-run) preview=true ;;
             --data-dir) custom=true ;;
         esac

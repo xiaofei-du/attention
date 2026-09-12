@@ -131,7 +131,7 @@ class HomebrewEntryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse((self.base / 'hacked').exists())
 
-    def test_project_python_is_not_executed_during_uninstall(self):
+    def check_project_python_is_not_executed(self, *arguments):
         project_bin = self.base / 'project/.venv/bin'
         project_bin.mkdir(parents=True)
         attack = project_bin / 'python3'
@@ -146,9 +146,17 @@ class HomebrewEntryTests(unittest.TestCase):
         uv.write_text('#!/bin/bash\nprintf "%s\\n" "' + sys.executable + '"\n')
         uv.chmod(0o700)
         (self.keg / 'uv-bin').write_text(str(uv_bin) + '\n')
-        result = self.run_entry('uninstall', '--dry-run', '--offline')
-        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.run_entry('uninstall', *arguments)
         self.assertFalse((self.base / 'python-hijacked').exists())
+        return result
+
+    def test_project_python_is_not_executed_during_uninstall(self):
+        result = self.check_project_python_is_not_executed('--dry-run', '--offline')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_help_as_a_data_path_cannot_skip_managed_python(self):
+        result = self.check_project_python_is_not_executed('--data-dir', '--help')
+        self.assertNotEqual(result.returncode, 0)
 
     def test_setup_delegates_invalid_options_without_touching_profiles(self):
         result = self.run_entry('setup', '--client', 'bogus')
