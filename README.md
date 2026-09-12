@@ -149,7 +149,7 @@ selects the Attention plugin from that publisher’s marketplace.
 
    > Please reply only with: “This is an Attention voice notification.”
 
-   With fresh-install defaults, you should hear **hey sunshine**, followed by
+   With fresh-install defaults, you should hear **hey boss**, followed by
    **This is an Attention voice notification.** Hearing it confirms playback;
    seeing the text alone does not. Existing speech preferences stay unchanged.
 4. Ask **“Attention help”** to see the available settings.

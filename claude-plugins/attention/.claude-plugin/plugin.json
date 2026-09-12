@@ -1,6 +1,6 @@
 {
   "name": "attention",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Your agent has something to report. Local spoken updates for macOS 14.2+.",
   "author": {
     "name": "Xiaofei Du"

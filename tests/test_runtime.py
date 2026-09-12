@@ -79,7 +79,7 @@ class RuntimeTests(unittest.TestCase):
             heard.append(text)
             return True
         run_worker(self.store, play=sink)
-        self.assertEqual(heard, ['hey sunshine 乙。'])
+        self.assertEqual(heard, ['hey boss 乙。'])
         self.assertEqual([job['status'] for job in self.store.jobs()], ['cancelled', 'spoken'])
 
     def test_quick_reenable_does_not_resurrect_an_interrupted_notification(self):
@@ -158,8 +158,8 @@ class RuntimeTests(unittest.TestCase):
             return True
         run_worker(Store(self.root), play=sink)
         run_worker(Store(self.root), play=sink)
-        self.assertEqual(heard, ['hey sunshine 我們在做語音通知。長回覆已整理成摘要。',
-                                 'hey sunshine 另一個任務完成了。', 'hey sunshine 追問已回答。'])
+        self.assertEqual(heard, ['hey boss 我們在做語音通知。長回覆已整理成摘要。',
+                                 'hey boss 另一個任務完成了。', 'hey boss 追問已回答。'])
         self.assertEqual([job['status'] for job in self.store.jobs()], ['spoken'] * 3)
 
     def test_readable_reply_is_not_forced_into_summary_at_160_characters(self):
@@ -198,8 +198,8 @@ class RuntimeTests(unittest.TestCase):
                     worker.terminate()
                 worker.join()
         self.assertEqual((self.root / 'heard.txt').read_text().splitlines(), [
-            'START hey sunshine 甲。', 'END hey sunshine 甲。',
-            'START hey sunshine 乙。', 'END hey sunshine 乙。',
+            'START hey boss 甲。', 'END hey boss 甲。',
+            'START hey boss 乙。', 'END hey boss 乙。',
         ])
         self.assertEqual([j['status'] for j in self.store.jobs()], ['spoken', 'spoken'])
 

@@ -187,7 +187,7 @@ class SessionNameTests(unittest.TestCase):
             with patch('nkc.runtime.resolve_session_name', side_effect=OSError('unavailable')) as lookup:
                 run_worker(self.store, play=lambda text, settings, cancelled: heard.append(text) or True)
             self.assertEqual(lookup.call_count, int(enabled))
-            self.assertEqual(heard, ['hey sunshine Done.'])
+            self.assertEqual(heard, ['hey boss Done.'])
         self.assertEqual([job['status'] for job in self.store.jobs()], ['spoken', 'spoken'])
 
     def test_malformed_optional_source_cannot_block_prompt_or_stop(self):
@@ -209,7 +209,7 @@ class SessionNameTests(unittest.TestCase):
         with patch('nkc.runtime.resolve_session_name') as lookup:
             run_worker(self.store, play=lambda text, settings, cancelled: heard.append(text) or True)
         lookup.assert_not_called()
-        self.assertEqual(heard, ['hey sunshine Done.'])
+        self.assertEqual(heard, ['hey boss Done.'])
 
     def test_claude_scan_limit_does_not_substitute_ai_for_an_unseen_older_custom_title(self):
         from nkc.session_names import _reverse_records

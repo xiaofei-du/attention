@@ -56,7 +56,7 @@ Set only explicitly requested fields. Session controls require the current
 native call context; never guess or supply a session ID or token. Use the installed tool
 schemas or the hook's CLI fallback, not invented commands.
 
-New installs use “hey sunshine”, speech on, session-name reporting off, and media
+New installs use “hey boss”, speech on, session-name reporting off, and media
 lowering off. Existing preferences survive updates. Media lowering temporarily
 reduces other apps during playback and restores them afterward; enabling it may
 require macOS system-audio permission, never microphone access. If unavailable,

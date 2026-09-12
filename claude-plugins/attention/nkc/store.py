@@ -98,7 +98,7 @@ class Store:
                 db.execute('UPDATE settings SET start=? WHERE id=1', (spoken_text('', name),))
             if new_settings:
                 # Seed only fresh installs; preserve every existing text/audio/empty opening.
-                db.execute('UPDATE settings SET start=? WHERE id=1', ('hey sunshine',))
+                db.execute('UPDATE settings SET start=? WHERE id=1', ('hey boss',))
             if 'start_audio' not in columns:
                 db.execute("ALTER TABLE settings ADD COLUMN start_audio TEXT NOT NULL DEFAULT ''")
             if 'announce_session_name' not in columns:

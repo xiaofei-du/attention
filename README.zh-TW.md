@@ -141,7 +141,7 @@ claude plugin install attention@xiaofei-du
 
    > 請只回覆：「這是一則 Attention 語音通知。」
 
-   使用全新安裝的預設值時，你會先聽到 **hey sunshine**，接著是
+   使用全新安裝的預設值時，你會先聽到 **hey boss**，接著是
    **這是一則 Attention 語音通知。** 聽到聲音才代表播放成功；
    只看到文字還不算。既有語音偏好不會被改動。
 4. 輸入 **「Attention help」**，查看可調整的設定。
