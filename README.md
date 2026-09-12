@@ -60,6 +60,10 @@ If you find Attention useful or have an idea for what to add, give me a shout:
 The plugin manager downloads the package from GitHub; no ZIP download, local
 marketplace folder, or compilation is needed.
 
+Prefer a guided install? The [terminal setup wizard](docs/setup.md) checks
+dependencies and installs for Codex, Claude Code, or both. Existing settings and
+disabled plugins stay as you left them. The manual steps below remain available.
+
 ### Requirements
 
 - **macOS 14.2 or later on Apple Silicon or Intel.** CI tests installation and
