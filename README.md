@@ -1,8 +1,10 @@
 # Attention! 📣
 
-<a href="https://giphy.com/gifs/cbbc-tracy-beaker-cbbc-star-cYaBD8kxE4PZudHBRA">
-  <img src="https://media.giphy.com/media/cYaBD8kxE4PZudHBRA/giphy.gif" alt="Attention GIF by CBBC on GIPHY" width="360">
-</a>
+<p align="center">
+  <a href="https://giphy.com/gifs/cbbc-tracy-beaker-cbbc-star-cYaBD8kxE4PZudHBRA">
+    <img src="https://media.giphy.com/media/cYaBD8kxE4PZudHBRA/giphy.gif" alt="Attention GIF by CBBC on GIPHY" width="360">
+  </a>
+</p>
 
 Your agent has something to report.
 
