@@ -15,12 +15,8 @@ concurrency:
 
 jobs:
   test:
-    name: Tests (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-15, macos-15-intel]
-    runs-on: ${{ matrix.os }}
+    name: Tests (Apple Silicon)
+    runs-on: macos-15
     timeout-minutes: 20
     env:
       # Compile the guarded macOS 26 APIs while still running tests on macOS 15.
@@ -45,7 +41,7 @@ jobs:
             packaging/requirements.txt
 
       - name: Install locked Python dependencies
-        run: uv sync --locked --python 3.12
+        run: uv sync --locked --managed-python --python 3.12
 
       - name: Show the native toolchain
         run: |

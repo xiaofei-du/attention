@@ -241,6 +241,10 @@ run_worker(Store(root), play=silent)
     def test_scoped_setting_is_verified_across_partial_uninstall_retries(self):
         mod = self.module()
         from nkc.store import Store
+        binary = self.base / 'bin'
+        binary.mkdir()
+        (binary / 'claude').write_text('#!/bin/sh\nexit 1\n')
+        (binary / 'claude').chmod(0o700)
         for scope, name in [('project', 'settings.json'), ('local', 'settings.local.json')]:
             with self.subTest(scope=scope):
                 Store(self.data / 'state')
@@ -255,7 +259,9 @@ run_worker(Store(root), play=silent)
                 def incomplete(command, **kwargs):
                     registry.write_text('{"version":2,"plugins":{}}')
                     return subprocess.CompletedProcess(command, 0)
-                with patch.object(mod, 'processes', return_value=[]), patch.object(mod.subprocess, 'run', side_effect=incomplete):
+                with patch.dict(os.environ, {'PATH': str(binary)}), \
+                        patch.object(mod, 'processes', return_value=[]), \
+                        patch.object(mod.subprocess, 'run', side_effect=incomplete):
                     with self.assertRaisesRegex(RuntimeError, 'still registered'):
                         mod.execute(removal)
                     retry = mod.plan(self.data, self.codex, self.claude)

@@ -21,10 +21,10 @@ marketplace folder, or compilation is needed.
 
 ### Requirements
 
-- **macOS 14.2 or later.** Apple Silicon and Intel binaries are included in the
-  bundle. Actual speaker playback has been tested on Apple Silicon; Intel and
-  other audio devices still need hardware testing. Windows and Linux playback
-  are not supported.
+- **macOS 14.2 or later on Apple Silicon.** Intel native binaries are included,
+  but installation is currently blocked by a Python dependency without an Intel
+  Mac wheel. Actual speaker playback has been tested on Apple Silicon; other
+  audio devices still need testing. Windows and Linux playback are not supported.
 - **Codex or Claude Code**, with its `codex` or `claude` command available in
   Terminal. Native session controls have been tested with Codex CLI 0.154.0 and
   Claude Code 2.1.268; older clients may need an update.
@@ -164,7 +164,7 @@ The script is also bundled locally, so removal does not depend on GitHub being
 reachable. For a default Codex installation of this release:
 
 ```sh
-uv run --no-config --no-project --isolated --python 3.12 "$HOME/.codex/plugins/cache/xiaofei-du/attention/0.1.3/scripts/uninstall.py" --yes
+uv run --no-config --no-project --isolated --python 3.12 "$HOME/.codex/plugins/cache/xiaofei-du/attention/0.1.4/scripts/uninstall.py" --yes
 ```
 
 For Claude Code, use `.claude` instead of `.codex` in that path. Adjust the profile
