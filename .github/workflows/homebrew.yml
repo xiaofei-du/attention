@@ -1,0 +1,46 @@
+name: Notify Homebrew tap
+
+on:
+  workflow_run:
+    workflows: [macOS tests]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-homebrew
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: >-
+      github.repository == 'xiaofei-du/attention' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == 'xiaofei-du/attention'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Only execute the exact main commit whose macOS tests succeeded.
+      # The cross-repo secret is exposed to the dispatch step only.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Compare the tested version with Homebrew
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/homebrew_event.py
+      - name: Request the tap update workflow
+        if: steps.version.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo '::error::Add HOMEBREW_TAP_TOKEN with Actions write access to xiaofei-du/homebrew-tap. See docs/homebrew.md.'
+            exit 1
+          fi
+          gh workflow run sync-attention.yml --repo xiaofei-du/homebrew-tap --ref main

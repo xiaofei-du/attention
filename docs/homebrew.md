@@ -92,3 +92,42 @@ is clean, remove the wrapper yourself with:
 ```sh
 HOMEBREW_NO_AUTOREMOVE=1 brew uninstall --formula --force xiaofei-du/tap/attention
 ```
+
+## Homebrew release automation
+
+The `Notify Homebrew tap` workflow runs after `macOS tests` succeeds for a push
+to Attention's `main`. It compares that tested commit's version with the formula
+in `xiaofei-du/homebrew-tap`. Only a newer stable version dispatches the tap's
+`Sync Attention` workflow. There is no cron job, polling, or LLM call. Failed CI,
+PRs, forks and unchanged versions do not request an update.
+
+The tap independently checks upstream main's CI, validates the source and packaged
+plugin versions, pins the archive and checksum, and opens an update PR. Its Mac
+checks cover Apple Silicon and Intel. Review and merge that PR to publish the
+Homebrew update. Existing installations still update through the documented commands.
+
+One-time maintainer setup:
+
+1. Install the `Sync Attention` workflow in `xiaofei-du/homebrew-tap` first.
+2. In that tap, allow GitHub Actions to create pull requests, keeping the default
+   workflow permission read-only. The updater grants itself only the permissions
+   needed to create the PR and request tests; it never approves or merges PRs.
+3. Create a GitHub **fine-grained personal access token**, selecting only
+   `xiaofei-du/homebrew-tap` and **Actions: read and write**. GitHub also grants
+   read-only Metadata. No Contents or Pull requests write permission is needed
+   for this trigger token.
+4. Save it in the **Attention** repository under **Settings → Secrets and
+   variables → Actions → New repository secret**, named `HOMEBREW_TAP_TOKEN`.
+   Enter the value directly in GitHub, not in chat, code or command history.
+   Set an expiry and rotate it before it expires.
+
+The tap uses its own short-lived `GITHUB_TOKEN` for publication. The trigger
+token is used only to start that workflow and has no Contents write permission. A GitHub App
+installation token with the same repository scope can replace the personal token.
+If the secret is absent or expired, the notification workflow fails visibly and
+leaves the formula unchanged; the original Attention CI result remains intact.
+
+For recovery or a preview, open the tap's **Actions → Sync Attention → Run
+workflow** on `main`; select `dry_run` to avoid creating a PR or starting Mac tests.
+An open update is left untouched, and repeated events do not rerun tests for the
+same commit. See the [tap's maintainer guide](https://github.com/xiaofei-du/homebrew-tap#automatic-updates).
