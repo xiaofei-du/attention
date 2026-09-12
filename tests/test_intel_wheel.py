@@ -5,6 +5,12 @@ from scripts.verify_intel_wheel import check_native_report
 
 
 class IntelWheelTests(unittest.TestCase):
+    def test_library_identity_is_not_an_external_dependency(self):
+        check_native_report('x86_64',
+                            'module.so:\n\t@rpath/module.so (compatibility version 0.0.0)\n'
+                            '\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0)\n',
+                            'minos 14.2\n', '@rpath/module.so')
+
     def test_static_intel_binary_with_supported_deployment_target_is_accepted(self):
         check_native_report('x86_64', 'module.so:\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0)\n',
                             'cmd LC_BUILD_VERSION\n platform MACOS\n minos 14.2\n sdk 26.3\n')
