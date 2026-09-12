@@ -43,9 +43,9 @@ service is required.
 
 This is for you if:
 
-- Your usual notification has all the personality of a microwave.
-- You're running five sessions and every ping starts a game of “Which one was that?”
-- You work from home and could use a coworker with a mute button.
+- Your usual notification sounds like a microwave, and you'd like something more personal.
+- You're running five sessions and every ping makes you think, “Wait, which one was that?”
+- You work from home and could use a noisy coworker.
 
 If it gets too noisy, ask your agent to **“Turn off speech globally.”** Quiet alone
 time is a feature too. Turn it back on whenever you like; see [Make it yours](#make-it-yours)
