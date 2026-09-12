@@ -60,7 +60,7 @@ as a required merge check is a separate repository setting.
 
 The **macOS tests** workflow runs on every pull request and push to `main`, and
 can also be started manually. It tests macOS 15 on Apple Silicon and Intel with
-Python 3.12, builds both client packages, verifies their payload integrity, and
+Python 3.12 and Xcode 26.3, builds both client packages, verifies their payload integrity, and
 runs the suite including checked-in package consistency checks. Dependencies are
 installed from `uv.lock`; the workflow fails if the lockfile needs updating.
 

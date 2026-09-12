@@ -23,6 +23,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
+      # Compile the guarded macOS 26 APIs while still running tests on macOS 15.
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
       # uv run puts this environment's Python on PATH for CLI subprocesses too.
       ATTENTION_PYTHON: python3
       ATTENTION_TEST_MARKETPLACE: ${{ github.workspace }}
@@ -44,6 +46,11 @@ jobs:
 
       - name: Install locked Python dependencies
         run: uv sync --locked --python 3.12
+
+      - name: Show the native toolchain
+        run: |
+          xcodebuild -version
+          xcrun --show-sdk-version
 
       - name: Build both client packages
         run: .venv/bin/python scripts/build_marketplace.py --output .build/ci-marketplace

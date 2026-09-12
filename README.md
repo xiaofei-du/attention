@@ -202,8 +202,9 @@ description format, and verification expectations.
 
 ## Build from source
 
-Only source builds need **Apple's Xcode Command Line Tools** (`xcrun` and `clang`).
-From this repository's root directory, run:
+Only source builds need **Xcode 26 or later** with the macOS 26 SDK (`xcrun` and
+`clang`). The newer SDK compiles APIs guarded for macOS 26; the deployment target
+remains macOS 14.2. From this repository's root directory, run:
 
 ```sh
 uv run --no-config --no-project --isolated --python 3.12 python scripts/build_marketplace.py --output .build/attention-marketplace
