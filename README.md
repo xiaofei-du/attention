@@ -63,8 +63,8 @@ brew install xiaofei-du/tap/attention
 attention setup
 ```
 
-Choose Codex, Claude Code, or both, then reopen your client and review Attention's
-hooks. Homebrew prepares `uv`; the wizard installs through your native plugin
+Choose Codex, Claude Code, or both, then follow [Enable and try it](#enable-and-try-it).
+Homebrew prepares `uv`; the wizard installs through your native plugin
 managers. Existing settings and disabled plugins stay as you left them.
 
 No Homebrew? Use the [terminal setup wizard](docs/setup.md#without-homebrew) or the
@@ -123,12 +123,19 @@ selects the Attention plugin from that publisher’s marketplace.
 ### Enable and try it
 
 1. Reload the plugin or reopen your client after installation.
-2. Review and enable the plugin's hooks when your client requests it. In Codex,
-   open **Hooks** in the app or run `/hooks` in the CLI, find
+2. In **Codex**, open **Hooks** in the app or run `/hooks` in the CLI, find
    `attention@xiaofei-du`, and Trust **UserPromptSubmit** and **Stop**.
-   Claude Code also has **PreToolUse**, used only to identify session-control calls.
-3. Start a new conversation and ask a short question. On a fresh installation,
-   the completed reply should be announced with **hey sunshine**.
+   **Claude Code** loads the hooks when the plugin is enabled; it does not require
+   Codex's per-hook Trust step. Reopen Claude Code or run `/reload-plugins` to load
+   a newly installed plugin. It also has **PreToolUse**, used only to identify
+   session-control calls.
+3. Start a new conversation and paste:
+
+   > Please reply only with: “This is an Attention voice notification.”
+
+   With fresh-install defaults, you should hear **hey sunshine**, followed by
+   **This is an Attention voice notification.** Hearing it confirms playback;
+   seeing the text alone does not. Existing speech preferences stay unchanged.
 4. Ask **“Attention help”** to see the available settings.
 
 Ordinary playback does not need microphone or system-audio recording permission.

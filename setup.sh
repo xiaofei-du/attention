@@ -89,8 +89,8 @@ main() (
     local scratch helper='' source_dir='' digest
     scratch="$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/attention-setup.XXXXXXXX")"
     trap 'result=$?; /bin/rm -f -- "$scratch/setup.py" "$scratch/uv-install.sh" "$scratch/sha256sum"; /bin/rmdir -- "$scratch"; exit "$result"' EXIT
-    readonly helper_sha256='1c9e04bc9608de58d22cf33f3f1815eb97a267b9c3fada660697bc8b250800a3'
-    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/8d511f799815a00bd97144c230b031914be84933'
+    readonly helper_sha256='47f86260cc9f4e7c125d45610951ee22bfaa0916849f557e00f7df4fee68da20'
+    readonly helper_url='https://api.github.com/repos/xiaofei-du/attention/git/blobs/a461017762bbd8dbf4891787c8a0f84deed47395'
     checksum() {
         digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$1")"
         [[ "${digest%% *}" = "$2" ]] || { printf '%s\n' 'SHA-256 mismatch. Downloaded code was not run.' >&2; return 1; }

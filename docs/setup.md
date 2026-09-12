@@ -98,9 +98,9 @@ from a version of the documentation you trust:
   trap '/bin/rm -f -- "$entry"' EXIT
   /usr/bin/curl -qfsSL --proto '=https' --proto-redir '=https' --max-time 30 --max-filesize 1048576 \
     -H 'Accept: application/vnd.github.raw+json' \
-    https://api.github.com/repos/xiaofei-du/attention/git/blobs/af5fef8db683b7dd523939cb44cc0272cada31ac -o "$entry"
+    https://api.github.com/repos/xiaofei-du/attention/git/blobs/ff270f1b609d69f7ee304bf9ba3904eb62b8d0a3 -o "$entry"
   digest="$(/usr/bin/env -u PERL5OPT -u PERL5LIB /usr/bin/shasum -a 256 "$entry")"
-  [ "${digest%% *}" = '9b5bb431563316e4ac3d5a7c530033363d86213abc27bb3c01bba81ac15fd843' ] || {
+  [ "${digest%% *}" = '486831ffa4710138fcd29257be0bcb8489b7376138855f7b167574761724dfaf' ] || {
     printf '%s\n' 'Attention launcher checksum mismatch; nothing was run.' >&2; exit 1;
   }
   /bin/bash -p "$entry"
