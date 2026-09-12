@@ -248,3 +248,9 @@ Native binaries are currently ad-hoc signed, without Developer ID notarization.
 The alpha still needs clean-machine and wider audio-device testing before a
 stable release. [Security boundaries](docs/security-boundaries.md) describe what
 has been checked and what remains unverified.
+
+## License
+
+Attention's code and documentation are available under the [MIT License](LICENSE).
+Third-party dependencies, the demo audio, and the linked GIF retain their
+respective licenses and rights.
