@@ -8,6 +8,11 @@ agent. Multiple sessions share one playback queue, so updates take turns.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
+**Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
+(MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
+agent and say **“Use this file as my starter.”** This is a custom opening sound;
+the spoken reply or summary follows it.
+
 ## Install
 
 **Alpha:** install directly from [xiaofei-du/attention](https://github.com/xiaofei-du/attention).
