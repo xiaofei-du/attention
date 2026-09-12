@@ -1,17 +1,30 @@
 # Attention! 📣
 
-Your agent has something to report.
+<p align="center">
+  <a href="https://giphy.com/gifs/cbbc-tracy-beaker-cbbc-star-cYaBD8kxE4PZudHBRA">
+    <img src="https://media.giphy.com/media/cYaBD8kxE4PZudHBRA/giphy.gif" alt="Attention GIF by CBBC on GIPHY" width="360">
+  </a>
+</p>
+
+Your agent would like a word.
 
 Spoken task updates for **Codex and Claude Code on macOS**. When a round finishes,
 Attention reads a short reply or a conversational summary written by that same
-agent. Multiple sessions share one playback queue, so updates take turns.
+agent. Multiple sessions share one playback queue. One at a time, please.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
-**Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
-(MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
-agent and say **“Use this file as my starter.”** This is a custom opening sound;
-the spoken reply or summary follows it.
+## Who is this for?
+
+This is for you if:
+
+- Your usual notification has all the personality of a microwave.
+- You're running five sessions and every ping starts a game of “Which one was that?”
+- You work from home and could use a coworker with a mute button.
+
+If it gets too noisy, ask your agent to **“Turn off speech globally.”** Quiet alone
+time is a feature too. Turn it back on whenever you like; see [Make it yours](#make-it-yours)
+below for the controls.
 
 ## Install
 
@@ -84,8 +97,9 @@ original notification sound.
 
 ## Make it yours
 
-Change settings by talking to your agent. These requests are examples, not actions
-performed during installation.
+Give your agent an entrance: a friendly greeting, a Mac chime, or a tiny bit of
+drama. Change settings by talking to your agent. These requests are examples,
+not actions performed during installation.
 
 | What you want | Example request |
 | --- | --- |
@@ -106,6 +120,11 @@ Starters support **text, Apple built-in sounds, custom audio, or none**. Custom
 files can be **MP3, WAV, M4A, AIF/AIFF**, up to **30 seconds / 20 MiB**. Attention
 copies the selected file locally. Audio replaces the text opening; it does not
 upload the file. Your opening stays fixed until you change it.
+
+**Try a starter:** [📣 Download the “Attention!” audio example](docs/assets/attention-starter.mp3?raw=1)
+(MP3 · 1.7 seconds · 29 KB). Listen to the downloaded file, then give it to your
+agent and say **“Use this file as my starter.”** This is a custom opening sound;
+the spoken reply or summary follows it. Subtlety is optional.
 
 Global mute stops current speech, clears pending updates, and discards new ones
 while off. Re-enabling preserves individually muted sessions and does not replay
@@ -229,3 +248,9 @@ Native binaries are currently ad-hoc signed, without Developer ID notarization.
 The alpha still needs clean-machine and wider audio-device testing before a
 stable release. [Security boundaries](docs/security-boundaries.md) describe what
 has been checked and what remains unverified.
+
+## License
+
+Attention's code and documentation are available under the [MIT License](LICENSE).
+Third-party dependencies, the demo audio, and the linked GIF retain their
+respective licenses and rights.
