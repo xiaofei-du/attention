@@ -14,6 +14,9 @@ agent. Multiple sessions share one playback queue. One at a time, please.
 Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
+If you find Attention useful or have an idea for what to add, give me a shout on
+[X](https://x.com/xiaofeidu283) or [Threads](https://www.threads.com/@smilefei.du).
+
 ## Who is this for?
 
 This is for you if:
