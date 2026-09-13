@@ -38,6 +38,10 @@
 一位一位来，先别抢话。
 语音使用 Mac 已安装的系统音色，不需要另外准备 LLM API key 或云端 TTS 服务。
 
+<p align="center">
+  <a href="https://xiaofeidu.com/attention/">网站与演示</a>
+</p>
+
 ## 适合谁用？
 
 如果你觉得：
