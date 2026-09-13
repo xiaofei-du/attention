@@ -40,7 +40,7 @@ Speech uses voices installed on your Mac. No separate LLM API key or cloud TTS
 service is required.
 
 <p align="center">
-  <a href="https://xiaofeidu.com/attention/">Website & demo</a>
+  <strong>See it in action → <a href="https://xiaofeidu.com/attention/">xiaofeidu.com/attention</a></strong>
 </p>
 
 ## Who is this for?
